@@ -14,8 +14,13 @@ h1{font-size:22px;margin:0 0 4px}p.sub{margin:0 0 20px;opacity:.7}
 .bar .dev{flex:1;min-width:160px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#999;margin-right:8px}.dot.on{background:#2e9e5b}
 button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:7px 14px;border-radius:8px;cursor:pointer}
 button.p{background:var(--acc);border-color:var(--acc);color:#fff}button:disabled{opacity:.45;cursor:default}
-.card{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
-.card.cur{border-color:var(--acc)}.card .t{flex:1}.card b{display:block}.card small{opacity:.65}
+.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.card.cur{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.card b{display:block}.card small{opacity:.65}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.card .pic{aspect-ratio:4/3;background:linear-gradient(135deg,var(--line),var(--card));display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700}
+.card .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.card .t{padding:10px 12px 4px;flex:1}.card .row{display:flex;gap:8px;padding:8px 12px 12px}.card .row .p{flex:1}
+.badge{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:6px;padding:0 6px}.badge.w{border-color:var(--warn);color:var(--warn)}
 details{margin:12px 0}summary{cursor:pointer;opacity:.75}.drop{border:2px dashed var(--line);border-radius:10px;padding:18px;text-align:center;opacity:.8;margin:16px 0}.drop.over{border-color:var(--acc)}
 .prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 4px}.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
 #msg{min-height:1.4em}.err{color:var(--warn)}label.adv{display:block;font-size:13px;opacity:.85;margin:8px 0}
@@ -31,7 +36,7 @@ details{margin:12px 0}summary{cursor:pointer;opacity:.75}.drop{border:2px dashed
   <button id="connect" class="p">Connect FM-1</button>
 </div>
 
-<div id="list"></div>
+<div id="list" class="grid"></div>
 
 <details><summary>Add more firmware</summary>
 <div class="drop" id="drop">Drop firmware packages here (.json web packages or the stock V15 .fwsc), or <button id="pick">choose files</button>
