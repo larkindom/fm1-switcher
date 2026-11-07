@@ -11,6 +11,9 @@ python3 -m http.server 8000   # then open http://localhost:8000 in Chrome
 ```
 Connect the FM-1, click **Connect FM-1**, add firmware to the library (stock V15 downloads from GitHub; other firmware as the `.json` web package the official workbench uses), click **Switch**.
 
+## Backups
+**Back up** saves your current project, samples and voice banks to one `fm1-backup-DATE.json` in your Downloads, through M-VAVE's project protocol. It works only while the FM-1 runs the official **FM1 Open** firmware. It is not a whole-flash image and there is no restore button yet, so it does not cover a firmware that can't save or update on your flash chip. For whole-flash backup use a download-mode tool such as FM-SWITCH on a Mac; for a firmware that won't update, use the hub's rescue page.
+
 ## Status: untested on hardware
 - `node test.mjs FM-1_015.fwsc` checks the official parser accepts the real stock package. Nothing has been flashed by this app yet.
 - Two update paths: M-VAVE's official one (`webupdate.js`: FM1 Open, stock V15) and the community one used by SLOOP, Melodee, AMB-1 and others (`felucca.js`, extracted unmodified from [The Firmware Hub](https://thefirmwarehub.com/), GPL-3.0, Leo Kuroshita). Community packages are downloaded from the hub on demand and checked against its SHA-256 pin; nothing is stored in this repo. Featured: SLOOP, Melodee, AMB-1, CoralFlower, ZEN-1, fm1-chord, FMEL-1, Frodhes, Clipper, FM-106, sloopDX, Tonitor, JIANT FM, ChoralRoot, MONO2K, KARMA (add more: one id in `HUB_IDS` in `app.js` plus a button). Packages marked "old flash chip" only know the first FM-1s' Puya flash; the app warns before installing them.

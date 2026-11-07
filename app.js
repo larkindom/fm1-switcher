@@ -61,6 +61,26 @@ async function runFelucca(m) {
   else await up.install(image, m.product, step);
 }
 
+// --- local backup: project, samples and voice banks, saved as one file in your Downloads ---
+// Works only while the FM-1 runs M-VAVE's FM1 Open firmware (the protocol FM1Web.Library speaks).
+async function backup() {
+  if (busy) return; busy = true; $('backup').disabled = true; const lib = new FM1Web.Library(access);
+  try {
+    msg('Connecting for backup…'); await lib.connect();
+    const out = { format: 'fm1-switcher-backup', version: 1, created: new Date().toISOString(), firmware: identity };
+    msg('Reading project…'); out.project = b64(await lib.download(0));
+    msg('Reading samples…'); out.samples = b64(await lib.samplesRead(p => $('bar').style.width = (p * 100 || 0) + '%'));
+    out.banks = []; if (lib.programs === 128) for (let i = 0; i < 4; i++) { msg(`Reading voice bank ${i + 1}…`); out.banks.push(b64(await lib.readBank(i))); }
+    const url = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' }));
+    Object.assign(document.createElement('a'), { href: url, download: `fm1-backup-${out.created.slice(0, 10)}.json` }).click();
+    URL.revokeObjectURL(url); localStorage.setItem('fm1-lastBackup', out.created);
+    msg('Backup saved to your Downloads folder.');
+  } catch (e) {
+    msg('Backup failed: ' + e.message + '. Backups only work under the official FM1 Open firmware; for other firmwares use their own editor.', true);
+  } finally { try { await lib.disconnect(); } catch {} busy = false; $('backup').disabled = !identity; }
+}
+$('backup').onclick = backup;
+
 // --- device ---
 async function connect() {
   try {
@@ -73,7 +93,7 @@ async function probe() {
   const u = new FM1Web.Updater(access, { loaderIdentity: '', product: '', family: 7, build_id: '' });
   try { const d = await u.discover(true); identity = d ? d.identity : null; if (d) await d.link.close(); }
   catch (e) { identity = null; }
-  $('dot').className = 'dot' + (identity ? ' on' : ''); $('dev').textContent = identity ? 'FM-1 connected: ' + identity : 'No FM-1 found';
+  $('backup').disabled = !identity; $('dot').className = 'dot' + (identity ? ' on' : ''); $('dev').textContent = identity ? 'FM-1 connected: ' + identity : 'No FM-1 found';
   render();
 }
 
@@ -112,7 +132,7 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 async function run(meta) {
   const force = $('force').checked;
   const oldChip = meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
-  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first. Do not unplug or power off until it finishes.${oldChip}`)) return;
+  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
     if (meta.kind === 'felucca') { await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
