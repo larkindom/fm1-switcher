@@ -39,7 +39,7 @@ const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', prof
 
 // --- community firmwares: catalogue + packages come from thefirmwarehub.com, pinned by its SHA-256 ---
 const HUB = 'https://thefirmwarehub.com/';
-const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor', 'jiant', 'choralroot'];
+const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor', 'jiant', 'choralroot', 'mono2k'];
 async function addHub(id) {
   const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
   const f = cat.firmwares.find(x => x.id === id);
