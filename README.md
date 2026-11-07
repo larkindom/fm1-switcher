@@ -21,4 +21,6 @@ Connect the FM-1, click **Connect FM-1**, add firmware to the library (stock V15
 
 Card images are loaded from thefirmwarehub.com (each from its project's repository), not stored here.
 
+See also [FM-SWITCH](https://github.com/ocean/FM-SWITCH): a native Mac/iPhone/iPad app with whole-flash backup and rescue (download mode), which a web page can't do.
+
 Not affiliated with M-VAVE. GPL-3.0.
