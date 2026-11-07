@@ -118,4 +118,13 @@ document.querySelectorAll('[data-hub]').forEach(b => b.onclick = async () => { t
 const dz = $('drop');
 dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave = () => dz.classList.remove('over');
 dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (const f of e.dataTransfer.files) await importFile(f).catch(x => msg(f.name + ': ' + x.message, true)); };
-render();
+// First run: fill the library with the featured firmwares so the page is a plain picker.
+(async () => {
+  await render(); const have = new Set((await all()).map(m => m.product)), jobs = [];
+  if (!have.has('FM-1_8000014')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
+  if (!have.has('FM-1_015')) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
+  for (const [id, p] of [['sloop', 'FM-1_900'], ['melodee', 'FM-1_91061'], ['amb', 'FM-1_7010302']]) if (!have.has(p)) jobs.push(() => addHub(id));
+  if (jobs.length) msg('Loading firmwares…');
+  for (const j of jobs) await j().catch(e => msg(e.message, true));
+  if (jobs.length && !$('msg').className) msg('');
+})();

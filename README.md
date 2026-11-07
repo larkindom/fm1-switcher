@@ -3,6 +3,9 @@
 One-click firmware swaps for the M-VAVE FM-1 from a Mac over USB-C. A small static web page (Chrome/Edge, Web MIDI) with a local firmware library; flashing is done by M-VAVE's own unmodified `webupdate.js` from [m-vave/fm1_open](https://github.com/m-vave/fm1_open) (GPL-3.0 with linking exception).
 
 ## Use
+Live: https://larkindom.github.io/fm1-switcher/ (the five featured firmwares load automatically).
+
+Locally:
 ```sh
 python3 -m http.server 8000   # then open http://localhost:8000 in Chrome
 ```
