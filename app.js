@@ -39,7 +39,7 @@ const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', prof
 
 // --- community firmwares: catalogue + packages come from thefirmwarehub.com, pinned by its SHA-256 ---
 const HUB = 'https://thefirmwarehub.com/';
-const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes'];
+const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor'];
 async function addHub(id) {
   const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
   const f = cat.firmwares.find(x => x.id === id);
@@ -126,12 +126,12 @@ dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); }; dz.ondra
 dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (const f of e.dataTransfer.files) await importFile(f).catch(x => msg(f.name + ': ' + x.message, true)); };
 // First run: fill the library with the featured firmwares so the page is a plain picker.
 (async () => {
-  await render(); const have = new Set((await all()).map(m => m.product)), jobs = [];
-  if (!have.has('FM-1_8000014')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
-  if (!have.has('FM-1_015')) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
+  await render(); const have = new Set((await all()).map(m => m.sha256)), jobs = [];
+  if (!have.has('7e7b6d260163cdf9d716f7fab44f19be600edeffcd390de74370b83c917fd0c6')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
+  if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
-  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.product === m.product); if (f && !m.hubId) await put({ ...m, hubId: f.id }); }
-  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (f && !have.has(f.product)) jobs.push(() => addHub(id)); }
+  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && !m.hubId) await put({ ...m, hubId: f.id }); }
+  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (f && !have.has(f.sha256)) jobs.push(() => addHub(id)); }
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
   if (jobs.length && !$('msg').className) msg('');
