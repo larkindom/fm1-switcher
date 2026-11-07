@@ -4,26 +4,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FM-1 Switcher</title>
-<style>
-:root{--bg:#f6f6f4;--fg:#1c1c1a;--card:#fff;--line:#dcdcd6;--acc:#2f5bea;--warn:#b3261e;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#eceae4;--card:#222220;--line:#3a3a36;--acc:#7b9bff;--warn:#ff8a80}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
-main{max-width:720px;margin:0 auto;padding:24px 16px 64px}
-h1{font-size:22px;margin:0 0 4px}p.sub{margin:0 0 20px;opacity:.7}
-.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:16px}
-.bar .dev{flex:1;min-width:160px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#999;margin-right:8px}.dot.on{background:#2e9e5b}
-button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:7px 14px;border-radius:8px;cursor:pointer}
-button.p{background:var(--acc);border-color:var(--acc);color:#fff}button:disabled{opacity:.45;cursor:default}
-.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.card.cur{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.card b{display:block}.card small{opacity:.65}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
-.card .pic{aspect-ratio:4/3;background:linear-gradient(135deg,var(--line),var(--card));display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700}
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap">
+<style>:root{--bg:#cfe6c6;--tex:rgba(40,90,70,.07);--card:#f8f6e2;--ink:#243a30;--edge:#2f5d50;--hi:#ffffff;--shade:#cfcab0;--acc:#2f9e6b;--accink:#fff;--warn:#b3261e;--line:#a9c7a0;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#12211b;--tex:rgba(255,255,255,.035);--card:#1d382d;--ink:#e6f0dc;--edge:#07110d;--hi:#4b7a67;--shade:#142a21;--acc:#4fcf92;--accink:#08251a;--warn:#ff8a80;--line:#2c5242}}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:17px/1.45 'Pixelify Sans',ui-monospace,monospace;background-color:var(--bg);
+ background-image:conic-gradient(var(--tex) 25%,#0000 0 50%,var(--tex) 0 75%,#0000 0);background-size:16px 16px;image-rendering:pixelated;font-variant-ligatures:none}
+main{max-width:760px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:30px;font-weight:600;margin:0 0 4px;letter-spacing:.5px;text-shadow:2px 2px 0 var(--shade)}
+p.sub{margin:0 0 18px;opacity:.8}
+/* pixel "window": dark outline, light inner edge, offset drop shade */
+.bar,.card,.drop,details{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.18)}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;margin:0 3px 22px}.bar .dev{flex:1;min-width:160px}
+.dot{display:inline-block;width:10px;height:10px;background:#8a9a90;margin-right:8px;box-shadow:0 0 0 2px var(--edge)}.dot.on{background:#38d27a}
+button{font:inherit;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:6px 14px;cursor:pointer;box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 var(--shade)}
+button:hover:not(:disabled){transform:translateY(-1px)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 2px var(--edge)}
+button.p{background:var(--acc);color:var(--accink);box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.35)}
+button:disabled{opacity:.45;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px;margin:0 3px}
+.card{display:flex;flex-direction:column;overflow:hidden;padding:6px}
+.card.cur{box-shadow:0 0 0 3px var(--acc),0 0 0 6px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 6px rgba(0,0,0,.18)}
+.card b{display:block;font-weight:600}.card small{opacity:.75;font-size:14px}
+.card .pic{position:relative;aspect-ratio:4/3;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;border-radius:3px;box-shadow:0 0 0 2px var(--edge);overflow:hidden}
 .card .pic img{width:100%;height:100%;object-fit:cover;display:block}
-.card .t{padding:10px 12px 4px;flex:1}.card .row{display:flex;gap:8px;padding:8px 12px 12px}.card .row .p{flex:1}
-.badge{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:6px;padding:0 6px}.badge.w{border-color:var(--warn);color:var(--warn)}
-details{margin:12px 0}summary{cursor:pointer;opacity:.75}.drop{border:2px dashed var(--line);border-radius:10px;padding:18px;text-align:center;opacity:.8;margin:16px 0}.drop.over{border-color:var(--acc)}
-.prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 4px}.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
-#msg{min-height:1.4em}.err{color:var(--warn)}label.adv{display:block;font-size:13px;opacity:.85;margin:8px 0}
+.card .pic::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,#0000 1px 3px);pointer-events:none}
+.card .t{padding:10px 6px 4px;flex:1}.card .row{display:flex;gap:8px;padding:8px 4px 4px}.card .row .p{flex:1}
+.badge{display:inline-block;font-size:12px;border-radius:3px;padding:0 6px;box-shadow:0 0 0 2px var(--line)}.badge.w{box-shadow:0 0 0 2px var(--warn);color:var(--warn)}
+details{margin:26px 3px 14px;padding:10px 14px}summary{cursor:pointer}
+.drop{box-shadow:none;background:none;border:2px dashed var(--edge);border-radius:6px;padding:16px;text-align:center;margin:12px 0}.drop.over{border-color:var(--acc)}
+.drop button{margin:3px}
+.prog{height:14px;margin:14px 3px 6px;background:var(--card);box-shadow:0 0 0 2px var(--edge);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--acc) 0 8px,#0000 8px 10px);transition:width .2s}
+#msg{min-height:1.5em;margin:0 3px}.err{color:var(--warn)}label.adv{display:block;font-size:14px;opacity:.85;margin:10px 3px}
+a{color:inherit}
 </style>
 </head>
 <body>
