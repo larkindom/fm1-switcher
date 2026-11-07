@@ -48,7 +48,7 @@ async function addHub(id) {
   const pkg = new Uint8Array(await r.arrayBuffer());
   if (Felucca.productOf(pkg) !== f.product || await Felucca.sha256hex(pkg) !== f.sha256) throw new Error('package does not match the hub catalogue');
   await put({ kind: 'felucca', sha256: f.sha256, label: `${f.name} ${f.version}`, release_version: f.version, product: f.product,
-    bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, pkg }); await render();
+    bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, installs: f.installs || 0, kind: f.kind || 'other', pkg }); await render();
 }
 async function runFelucca(m) {
   const up = new Felucca.Updater(access, console.log), image = Felucca.logicalImage(m.pkg), total = 2 * Math.ceil(image.length / 512);
@@ -79,7 +79,11 @@ async function probe() {
 
 async function render() {
   const items = await all(); $('list').replaceChildren(); $('listOld').replaceChildren();
-  for (const m of items.sort((a, b) => a.label.localeCompare(b.label))) {
+  const kinds = [...new Set(items.map(m => m.kind).filter(Boolean))].sort(), sel = $('kind');
+  if (sel.options.length - 1 !== kinds.length) sel.replaceChildren(new Option('All', ''), ...kinds.map(k => new Option(k, k)));
+  sel.value = pref('kind'); $('sort').value = pref('sort') || 'name';
+  const by = $('sort').value === 'installs' ? (a, b) => (b.installs || 0) - (a.installs || 0) : (a, b) => a.label.localeCompare(b.label);
+  for (const m of items.filter(m => !sel.value || m.kind === sel.value).sort(by)) {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
     const pic = m.hubId ? `<img loading="lazy" alt="" src="${HUB}img/w0/${m.hubId}.webp">` : esc(m.label.slice(0, 2));
     el.innerHTML = `<div class="pic">${pic}</div><div class="t"><b></b><small></small></div><div class="row"></div>`;
@@ -95,6 +99,14 @@ async function render() {
   $('old').hidden = !items.some(m => m.chip === 'old');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
 }
+const pref = (k, v) => { try { if (v !== undefined) localStorage.setItem('fm1-' + k, v); return localStorage.getItem('fm1-' + k) || ''; } catch { return ''; } };
+$('sort').onchange = e => { pref('sort', e.target.value); render(); };
+$('kind').onchange = e => { pref('kind', e.target.value); render(); };
+// Flash history: what this browser switched to, newest first.
+const hist = () => { try { return JSON.parse(localStorage.getItem('fm1-history') || '[]'); } catch { return []; } };
+const showHist = () => { $('hist').textContent = hist().length ? 'Recent switches: ' + hist().slice(0, 5).map(h => `${h.label} (${new Date(h.at).toLocaleDateString()})`).join(' · ') : ''; };
+const logHist = m => { try { localStorage.setItem('fm1-history', JSON.stringify([{ label: m.label, product: m.product, at: Date.now() }, ...hist()].slice(0, 20))); } catch {} showHist(); };
+showHist();
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 async function run(meta) {
@@ -103,14 +115,14 @@ async function run(meta) {
   if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first. Do not unplug or power off until it finishes.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
-    if (meta.kind === 'felucca') { await runFelucca(meta); msg('Done: now running ' + meta.label); await probe(); busy = false; return render(); }
+    if (meta.kind === 'felucca') { await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
     const pkg = await FM1Web.prepare(meta);
     updater = new FM1Web.Updater(access, pkg, (t, p) => { msg(String(t)); if (p != null) $('bar').style.width = p + '%'; });
     const r = await updater.connect({ force });
     if (r.migration) throw new Error('Current firmware (' + r.identity + ') is not recognised. Tick "Allow switching from firmware this app doesn\'t recognise" and retry.');
     if (r.same) throw new Error('That firmware is already installed.');
     await updater.install({ force });
-    msg('Done: now running ' + meta.label); await probe();
+    msg('Done: now running ' + meta.label); logHist(meta); await probe();
   } catch (e) { msg(e.message, true); }
   busy = false; render();
 }
@@ -130,7 +142,7 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   if (!have.has('7e7b6d260163cdf9d716f7fab44f19be600edeffcd390de74370b83c917fd0c6')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
   if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
-  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && !m.hubId) await put({ ...m, hubId: f.id }); }
+  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined)) await put({ ...m, hubId: f.id, installs: f.installs || 0, kind: f.kind || 'other' }); }
   for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (f && !have.has(f.sha256)) jobs.push(() => addHub(id)); }
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
