@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 Switcher</title>
+<style>
+:root{--bg:#f6f6f4;--fg:#1c1c1a;--card:#fff;--line:#dcdcd6;--acc:#2f5bea;--warn:#b3261e;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#eceae4;--card:#222220;--line:#3a3a36;--acc:#7b9bff;--warn:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:22px;margin:0 0 4px}p.sub{margin:0 0 20px;opacity:.7}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:16px}
+.bar .dev{flex:1;min-width:160px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#999;margin-right:8px}.dot.on{background:#2e9e5b}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:7px 14px;border-radius:8px;cursor:pointer}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff}button:disabled{opacity:.45;cursor:default}
+.card{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.card.cur{border-color:var(--acc)}.card .t{flex:1}.card b{display:block}.card small{opacity:.65}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:18px;text-align:center;opacity:.8;margin:16px 0}.drop.over{border-color:var(--acc)}
+.prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 4px}.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+#msg{min-height:1.4em}.err{color:var(--warn)}label.adv{display:block;font-size:13px;opacity:.85;margin:8px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>FM-1 Switcher</h1>
+<p class="sub">Plug your FM-1 into your Mac over USB-C, pick a firmware, switch. Chrome or Edge only (Web MIDI).</p>
+
+<div class="bar">
+  <div class="dev"><span class="dot" id="dot"></span><span id="dev">Not connected</span></div>
+  <button id="connect" class="p">Connect FM-1</button>
+</div>
+
+<div id="list"></div>
+
+<div class="drop" id="drop">Drop firmware packages here (.json web packages or the stock V15 .fwsc), or <button id="pick">choose files</button>
+  <button id="addv15">Add stock V15 from GitHub</button><input id="file" type="file" multiple hidden></div>
+
+<label class="adv"><input type="checkbox" id="force"> Allow switching from firmware this app doesn't recognise (needed for stock V15 and most community firmware)</label>
+<div class="prog"><i id="bar"></i></div>
+<div id="msg"></div>
+<p class="sub">Back up your projects and samples before switching: formats are not compatible between firmwares. Keep the FM-1 powered during a switch. Power loss mid-write can leave it unbootable.</p>
+</main>
+<script src="webupdate.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
