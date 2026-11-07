@@ -13,6 +13,6 @@ Connect the FM-1, click **Connect FM-1**, add firmware to the library (stock V15
 - Only firmware the official updater accepts is supported (identities `FM1_OFFICIAL_OPEN`, `FM1_COMMUNITY_n`, `FM-1_8xxxxxx`, and stock V15). Other community firmware needs the Firmware Hub for now.
 - Switching from stock V15 or unrecognised firmware needs the "allow" checkbox.
 - Updater messages come from the vendor file and are partly in Chinese.
-- No firmware binaries are bundled; each has its own licence. Back up projects and samples first; formats differ between firmwares. Power loss mid-write can brick the unit.
+- Bundled: `firmware/fm1-open-v14.json`, the official FM1 Open V14 web package extracted unmodified from M-VAVE's [V14 release](https://github.com/m-vave/fm1_open/releases/tag/V14) (app GPL-3.0; engine under M-VAVE's SDK terms). Stock V15 is fetched from M-VAVE's repo, not stored here. Community firmwares (Clipper, SLOOP, ...) are not bundled: each has its own licence and most don't fit the official updater's package format. Back up projects and samples first; formats differ between firmwares. Power loss mid-write can brick the unit.
 
 Not affiliated with M-VAVE. GPL-3.0.
