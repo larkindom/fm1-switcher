@@ -12,6 +12,7 @@ body{margin:0;color:var(--ink);font:17px/1.45 'Pixelify Sans',ui-monospace,monos
  background-image:conic-gradient(var(--tex) 25%,#0000 0 50%,var(--tex) 0 75%,#0000 0);background-size:16px 16px;image-rendering:pixelated;font-variant-ligatures:none}
 main{max-width:760px;margin:0 auto;padding:24px 16px 64px}
 h1{font-size:30px;font-weight:600;margin:0 0 4px;letter-spacing:.5px;text-shadow:2px 2px 0 var(--shade)}
+h2{font-size:21px;font-weight:600;margin:34px 3px 4px;text-shadow:2px 2px 0 var(--shade)}
 p.sub{margin:0 0 18px;opacity:.8}
 /* pixel "window": dark outline, light inner edge, offset drop shade */
 .bar,.card,.drop,details{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.18)}
@@ -50,6 +51,11 @@ a{color:inherit}
 </div>
 
 <div id="list" class="grid"></div>
+<section id="old" hidden>
+  <h2>Older FM-1 flash chip only</h2>
+  <p class="sub">These firmwares only recognise the first FM-1s' Puya flash chip. On newer units (UC25HQ80, common on AliExpress) saving can fail and later updates may be refused. Use them only if you know your unit has the older chip.</p>
+  <div id="listOld" class="grid"></div>
+</section>
 
 <details><summary>Add more firmware</summary>
 <div class="drop" id="drop">Drop firmware packages here (.json web packages or the stock V15 .fwsc), or <button id="pick">choose files</button>

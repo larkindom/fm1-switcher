@@ -78,7 +78,7 @@ async function probe() {
 }
 
 async function render() {
-  const items = await all(); $('list').replaceChildren();
+  const items = await all(); $('list').replaceChildren(); $('listOld').replaceChildren();
   for (const m of items.sort((a, b) => a.label.localeCompare(b.label))) {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
     const pic = m.hubId ? `<img loading="lazy" alt="" src="${HUB}img/w0/${m.hubId}.webp">` : esc(m.label.slice(0, 2));
@@ -90,8 +90,9 @@ async function render() {
     sw.onclick = () => run(m);
     const rm = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove from library', disabled: busy });
     rm.onclick = async () => { await del(m.sha256); render(); };
-    el.querySelector('.row').append(sw, rm); $('list').append(el);
+    el.querySelector('.row').append(sw, rm); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
   }
+  $('old').hidden = !items.some(m => m.chip === 'old');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
