@@ -7,3 +7,12 @@ if (p.product !== 'FM-1_015') throw new Error('bad product'); console.log('ok', 
 // Bundled packages must pass the official prepare() (hash + loader + identity checks).
 const m = JSON.parse(readFileSync('firmware/fm1-open-v14.json', 'utf8'));
 const pkg = await ctx.FM1Web.prepare(m); console.log('ok prepare', pkg.product, pkg.loaderIdentity);
+// Hub community packages: the extracted updater must recognise the live hub packages and match the catalogue pin.
+vm.runInContext(readFileSync('felucca.js', 'utf8'), ctx);
+const cat = await (await fetch('https://thefirmwarehub.com/catalog.json')).json();
+for (const id of ['sloop', 'melodee', 'amb']) {
+  const f = cat.firmwares.find(x => x.id === id);
+  const pkg = vm.runInContext('(b)=>new Uint8Array(b)', ctx)(await (await fetch('https://thefirmwarehub.com/' + f.pkg)).arrayBuffer());
+  if (ctx.Felucca.productOf(pkg) !== f.product || await ctx.Felucca.sha256hex(pkg) !== f.sha256) throw new Error(id + ' mismatch');
+  ctx.Felucca.logicalImage(pkg); console.log('ok hub', id, f.version, f.product, f.lic);
+}

@@ -25,7 +25,7 @@ const sha = async u8 => [...new Uint8Array(await crypto.subtle.digest('SHA-256',
 // Validate with the official code before storing; rejects anything it would refuse to flash.
 async function add(meta) {
   await FM1Web.prepare(meta);
-  meta.label = meta.profile || meta.product;
+  meta.label = meta.label || meta.profile || meta.product;
   await put(meta); await render();
 }
 async function importFile(f) {
@@ -36,6 +36,29 @@ async function importFile(f) {
 }
 const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', profile: 'M-VAVE Original V15', family: 7,
   build_id: STOCK_SHA, sha256: STOCK_SHA, bytes: u8.length, loader_sha256: STOCK_LOADER, data: b64(u8) });
+
+// --- community firmwares: catalogue + packages come from thefirmwarehub.com, pinned by its SHA-256 ---
+const HUB = 'https://thefirmwarehub.com/';
+async function addHub(id) {
+  const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
+  const f = cat.firmwares.find(x => x.id === id);
+  if (!f || !f.pkg) throw new Error(id + ' is not in the hub catalogue');
+  const r = await fetch(HUB + f.pkg); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
+  const pkg = new Uint8Array(await r.arrayBuffer());
+  if (Felucca.productOf(pkg) !== f.product || await Felucca.sha256hex(pkg) !== f.sha256) throw new Error('package does not match the hub catalogue');
+  await put({ kind: 'felucca', sha256: f.sha256, label: `${f.name} ${f.version}`, release_version: f.version, product: f.product,
+    bytes: pkg.length, lic: f.lic, chip: f.chip, pkg }); await render();
+}
+async function runFelucca(m) {
+  const up = new Felucca.Updater(access, console.log), image = Felucca.logicalImage(m.pkg), total = 2 * Math.ceil(image.length / 512);
+  const step = (k, a) => {
+    const t = { start: 'Asking the FM-1…', verify: 'The FM-1 reads the package…', loader: 'Update loader starting (the FM-1 restarts)…', write: 'Writing. Do not unplug.', reboot: 'Restarting…', done: 'Done.' }[k];
+    if (t) msg(t); if (typeof a === 'number') $('bar').style.width = Math.min(100, (k === 'write' ? total / 2 + a : a) / total * 100) + '%';
+  };
+  const ota = await up.find(id => /^ota-/i.test(id.model));
+  if (ota) { ota.link.close(); if (!(await up.resume(image, step))) throw new Error('stopped'); }
+  else await up.install(image, m.product, step);
+}
 
 // --- device ---
 async function connect() {
@@ -59,7 +82,7 @@ async function render() {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
     el.innerHTML = '<div class="t"><b></b><small></small></div>';
     el.querySelector('b').textContent = m.label;
-    el.querySelector('small').textContent = `${m.release_version || ''} ${m.product} · ${(m.bytes / 1024) | 0} KB` + (identity === m.product ? ' · installed' : '');
+    el.querySelector('small').textContent = `${m.release_version || ''} ${m.product} · ${(m.bytes / 1024) | 0} KB` + (m.lic ? ' · ' + m.lic : '') + (m.chip === 'old' ? ' · old flash chip only' : '') + (identity === m.product ? ' · installed' : '');
     const sw = Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
     sw.onclick = () => run(m);
     const rm = Object.assign(document.createElement('button'), { textContent: 'Remove', disabled: busy });
@@ -74,6 +97,7 @@ async function run(meta) {
   if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first. Do not unplug or power off until it finishes.`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
+    if (meta.kind === 'felucca') { await runFelucca(meta); msg('Done: now running ' + meta.label); await probe(); busy = false; return render(); }
     const pkg = await FM1Web.prepare(meta);
     updater = new FM1Web.Updater(access, pkg, (t, p) => { msg(String(t)); if (p != null) $('bar').style.width = p + '%'; });
     const r = await updater.connect({ force });
@@ -90,6 +114,7 @@ $('pick').onclick = () => $('file').click();
 $('file').onchange = async e => { for (const f of e.target.files) await importFile(f).catch(x => msg(f.name + ': ' + x.message, true)); e.target.value = ''; };
 $('addv15').onclick = async () => { try { msg('Downloading…'); const r = await fetch(STOCK_URL); await addStock(new Uint8Array(await r.arrayBuffer())); msg('Added stock V15.'); } catch (e) { msg(e.message, true); } };
 $('addv14').onclick = async () => { try { msg('Loading…'); await add(await (await fetch('firmware/fm1-open-v14.json')).json()); msg('Added FM1 Open V14.'); } catch (e) { msg(e.message, true); } };
+document.querySelectorAll('[data-hub]').forEach(b => b.onclick = async () => { try { msg('Downloading from the hub…'); await addHub(b.dataset.hub); msg('Added ' + b.textContent + '.'); } catch (e) { msg(e.message, true); } });
 const dz = $('drop');
 dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave = () => dz.classList.remove('over');
 dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (const f of e.dataTransfer.files) await importFile(f).catch(x => msg(f.name + ': ' + x.message, true)); };
