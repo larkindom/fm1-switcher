@@ -16,3 +16,9 @@ for (const id of ['sloop', 'melodee', 'amb']) {
   if (ctx.Felucca.productOf(pkg) !== f.product || await ctx.Felucca.sha256hex(pkg) !== f.sha256) throw new Error(id + ' mismatch');
   ctx.Felucca.logicalImage(pkg); console.log('ok hub', id, f.version, f.product, f.lic);
 }
+for (const id of ['coralflower', 'zen', 'chord', 'fmel', 'frodhes']) {
+  const f = cat.firmwares.find(x => x.id === id);
+  const pkg = vm.runInContext('(b)=>new Uint8Array(b)', ctx)(await (await fetch('https://thefirmwarehub.com/' + f.pkg)).arrayBuffer());
+  if (ctx.Felucca.productOf(pkg) !== f.product || await ctx.Felucca.sha256hex(pkg) !== f.sha256) throw new Error(id + ' mismatch');
+  ctx.Felucca.logicalImage(pkg); console.log('ok hub', id, f.version, f.product, 'chip', f.chip);
+}

@@ -39,6 +39,7 @@ const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', prof
 
 // --- community firmwares: catalogue + packages come from thefirmwarehub.com, pinned by its SHA-256 ---
 const HUB = 'https://thefirmwarehub.com/';
+const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes'];
 async function addHub(id) {
   const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
   const f = cat.firmwares.find(x => x.id === id);
@@ -94,7 +95,8 @@ async function render() {
 
 async function run(meta) {
   const force = $('force').checked;
-  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first. Do not unplug or power off until it finishes.`)) return;
+  const oldChip = meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
+  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first. Do not unplug or power off until it finishes.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
     if (meta.kind === 'felucca') { await runFelucca(meta); msg('Done: now running ' + meta.label); await probe(); busy = false; return render(); }
@@ -123,7 +125,8 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   await render(); const have = new Set((await all()).map(m => m.product)), jobs = [];
   if (!have.has('FM-1_8000014')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
   if (!have.has('FM-1_015')) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
-  for (const [id, p] of [['sloop', 'FM-1_900'], ['melodee', 'FM-1_91061'], ['amb', 'FM-1_7010302']]) if (!have.has(p)) jobs.push(() => addHub(id));
+  const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
+  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (f && !have.has(f.product)) jobs.push(() => addHub(id)); }
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
   if (jobs.length && !$('msg').className) msg('');
