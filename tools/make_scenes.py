@@ -2,7 +2,7 @@
 """Draws the two pixel-art backgrounds (assets/scene-light.png, scene-dark.png): original art, 192x108, scaled up by the page.
    python3 tools/make_scenes.py"""
 import zlib, struct, random, math
-W, H = 192, 108
+W, H = 256, 144
 
 def hexc(s): s = s.lstrip('#'); return tuple(int(s[i:i+2], 16) for i in (0, 2, 4))
 
@@ -39,119 +39,96 @@ class Img:
         def ch(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
         open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + ch(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 2, 0, 0, 0)) + ch(b'IDAT', zlib.compress(raw, 9)) + ch(b'IEND', b''))
 
-def cloud(im, x, y, w, c='#ffffff', sh='#d6ecf7'):
-    im.ell(x + w // 2, y + 3, w // 2, 3, c); im.ell(x + w // 3, y + 1, w // 4, 3, c); im.ell(x + 2 * w // 3, y, w // 4, 3, c)
-    im.rect(x + 2, y + 5, w - 4, 1, sh)
 
-def light():
-    im = Img(); r = random.Random(7)
-    im.rect(0, 0, W, H, '#f6e7c8')
-    # soft wall wash
-    for y in range(0, 64, 2): im.rect(0, y, W, 1, '#f1dfba', .25)
-    # windows with sky
-    def window(x0, x1, curtain):
-        for y in range(0, 62):
-            t = y / 62; c = (int(130 + 90 * t), int(200 + 40 * t), 240)
-            im.rect(x0, y, x1 - x0, 1, c)
-        for cx, cy, cw in ((x0 + 4, 18 + r.randrange(0, 8), 18), (x0 + (x1 - x0) // 2, 30 + r.randrange(0, 8), 24)): cloud(im, cx, cy, cw)
-        if curtain:
-            im.rect(x0, 0, x1 - x0, 12, '#7fa6df')
-            for k in range(x0 + 3, x1 - 3, 9):
-                im.rect(k, 3, 2, 2, '#e6f0ff'); im.rect(k - 1, 4, 4, 1, '#e6f0ff'); im.rect(k + 4, 8, 2, 2, '#e6f0ff')
-            im.rect(x0, 12, x1 - x0, 1, '#4d73b3')
-    window(2, 50, True); window(62, 130, False); window(142, 190, True)
-    for x in (0, 50, 60, 130, 140, 190):   # frames
-        im.rect(x, 0, 3, 64, '#9a6a45'); im.rect(x + 1, 0, 1, 64, '#b98558')
-    im.rect(0, 62, W, 3, '#9a6a45'); im.rect(0, 0, W, 2, '#9a6a45')
-    # desk
-    im.rect(0, 65, W, 28, '#ebc88e'); im.rect(0, 65, W, 2, '#f6dca8')
-    for y in range(70, 92, 4): im.rect(0, y, W, 1, '#dcb678', .5)
-    im.rect(0, 93, W, 4, '#9a6a45'); im.rect(0, 97, W, 11, '#7d5436')
-    for x in range(0, W, 24): im.rect(x, 99, 1, 9, '#5d3d26')
-    # lamp (left)
-    im.rect(8, 84, 10, 3, '#c9806f'); im.line(12, 84, 16, 68, '#d9917e'); im.line(13, 84, 17, 68, '#d9917e'); im.line(16, 68, 30, 63, '#d9917e')
-    im.poly([(26, 60), (44, 66), (40, 72), (23, 66)], '#f0b8a2'); im.poly([(26, 60), (44, 66), (41, 67), (24, 63)], '#f8d0bf'); im.rect(32, 72, 3, 2, '#ffe27a')
-    # pencil cup + notebook
-    im.rect(14, 76, 9, 10, '#d9404a'); im.rect(14, 76, 9, 1, '#f26b73')
-    for k, c in enumerate(('#f2c14e', '#6bb36b', '#5a8fd9', '#c9806f')): im.line(15 + k * 2, 76, 14 + k * 3, 68 - k % 2, c)
-    im.rect(34, 72, 18, 13, '#fbf7ee'); im.rect(34, 72, 18, 1, '#c9c2b2'); im.rect(34, 72, 1, 13, '#c9c2b2')
-    for y in range(75, 84, 3): im.rect(37, y, 12, 1, '#9aa3b5')
-    # plant in pink pot (center-left)
-    im.rect(70, 76, 12, 12, '#e98fb0'); im.rect(70, 76, 12, 2, '#f7b5cd'); im.rect(72, 86, 8, 2, '#c96d90')
-    for dx, dy, rx, ry in ((-6, -10, 9, 4), (7, -14, 9, 4), (0, -22, 6, 8), (-9, -22, 5, 3)):
-        im.ell(76 + dx, 72 + dy, rx, ry, '#4f9a6b'); im.ell(76 + dx, 71 + dy, rx - 2, ry - 1, '#6cb785')
-    # right side: shelf with books, plush, plant
-    im.rect(150, 26, 2, 66, '#9a6a45'); im.rect(188, 26, 2, 66, '#9a6a45')
-    for y in (44, 62, 80): im.rect(150, y, 40, 3, '#b98558'); im.rect(150, y + 3, 40, 1, '#8a5a3a')
-    cols = ['#d9404a', '#f2c14e', '#6bb3a5', '#5a8fd9', '#c9806f', '#8a6fc9', '#e98fb0']
-    x = 153
-    while x < 186:
-        w = r.choice((3, 4, 5)); h = r.choice((11, 13, 15)); c = r.choice(cols); im.rect(x, 62 - h, w, h, c); im.rect(x, 62 - h, w, 1, '#ffffff', .3); x += w + 1
-    x = 153
-    while x < 180:
-        w = r.choice((3, 4)); h = r.choice((10, 12)); c = r.choice(cols); im.rect(x, 80 - h, w, h, c); x += w + 1
-    im.ell(168, 38, 8, 6, '#f6a0c2'); im.rect(160, 42, 5, 2, '#d9404a'); im.rect(172, 42, 5, 2, '#d9404a'); im.px(165, 37, '#8a3d5c'); im.px(171, 37, '#8a3d5c')
-    im.rect(180, 36, 8, 8, '#d28a6f'); im.ell(184, 32, 5, 5, '#4f9a6b'); im.ell(182, 30, 3, 4, '#6cb785')
-    # white cat sleeping, orange cat, yellow plant
-    im.ell(166, 88, 22, 7, '#fdfbf7'); im.ell(150, 86, 7, 6, '#fdfbf7'); im.ell(150, 82, 3, 2, '#f1c9a0'); im.rect(146, 79, 2, 3, '#fdfbf7'); im.rect(152, 79, 2, 3, '#fdfbf7')
-    im.ell(170, 85, 6, 3, '#eebb86'); im.rect(140, 93, 3, 2, '#fdfbf7')
-    im.rect(130, 78, 12, 12, '#e8b13a'); im.rect(130, 78, 12, 2, '#f6cd62')
-    for dx, dy, rx, ry in ((-4, -9, 7, 3), (5, -11, 7, 3), (0, -17, 5, 6)): im.ell(136 + dx, 76 + dy, rx, ry, '#4f9a6b')
-    im.ell(14, 104, 12, 7, '#f2b043'); im.ell(18, 98, 6, 6, '#f2b043'); im.poly([(13, 94), (16, 90), (18, 95)], '#f2b043'); im.poly([(19, 95), (22, 90), (24, 96)], '#f2b043')
-    im.rect(15, 98, 2, 2, '#243a30'); im.rect(21, 98, 2, 2, '#243a30'); im.rect(18, 101, 2, 1, '#d9707f')
-    return im
+PAL = {
+ 'day': dict(ceil=('#b57a45', '#a66d3b'), beam='#7d4a28', wall='#d9a77a', wall2='#cf9a6c', frame='#8c5a3a', sky=((126, 190, 238), (222, 240, 250)), cloud='#ffffff',
+             hill='#7d9bc4', roofA='#6f87b3', roofB='#8aa0c8', wallH='#e8d4b8', lit='#fff1b0', tree='#4f8f62', desk='#b86f3f', deskTop='#d28b57', chair='#9a5a30',
+             floor=('#c98f55', '#bb8249'), blanket='#8fa86e', pillow='#b9cf95', bed='#9a5a30', glow='#ffe9a0', tint=None, stars=False),
+ 'dusk': dict(ceil=('#8a4c36', '#7b4230'), beam='#5a2f22', wall='#74463f', wall2='#6a3f39', frame='#6b4a4a', sky=((88, 110, 184), (232, 170, 140)), cloud='#c9a6c0',
+              hill='#4f5f8e', roofA='#4a5a86', roofB='#5b6b9a', wallH='#6f7fa8', lit='#f7a24e', tree='#34476a', desk='#8f4f2e', deskTop='#b5683b', chair='#7a4126',
+              floor=('#a95f33', '#9a542d'), blanket='#7b8a58', pillow='#9ab07a', bed='#7a4126', glow='#ffd27a', tint=(40, 14, 60, .16), stars=True),
+}
 
-def dark():
-    im = Img(); r = random.Random(11)
-    for y in range(H): t = y / H; im.rect(0, y, W, 1, (int(24 + 20 * t), int(24 + 14 * t), int(44 + 22 * t)))
-    # slanted ceiling (left) and right wall lighter panel
-    im.poly([(0, 0), (60, 0), (46, 34), (0, 70)], '#171627')
-    im.poly([(192, 0), (140, 0), (150, 36), (192, 56)], '#1a1930')
-    im.rect(138, 40, 54, 52, '#2e2840'); im.rect(138, 40, 54, 1, '#3a3350')
-    # skylight with rain sky
-    sky = [(50, 0), (142, 0), (130, 36), (62, 36)]
-    im.poly(sky, '#34465f')
-    for y in range(0, 36):
-        im.rect(0, 0, 0, 0, '#000')
-    for k in range(70):
-        x = r.randrange(54, 140); y = r.randrange(0, 34); L = r.randrange(3, 7)
-        for t in range(L): im.px(x - t // 2, y + t, '#9fb6d3', .6)
-    im.line(50, 0, 62, 36, '#6a4636'); im.line(51, 0, 63, 36, '#6a4636'); im.line(142, 0, 130, 36, '#6a4636'); im.line(141, 0, 129, 36, '#6a4636')
-    im.rect(62, 36, 68, 2, '#6a4636'); im.rect(60, 38, 72, 1, '#4a3025')
-    for k in range(5): im.px(r.randrange(66, 126), 37, '#c7dcf5', .8)   # drips on the sill
-    # right wall: posters, shelf, sconce
-    posters = [(146, 44, 10, 14, '#6b5b8c'), (158, 44, 12, 18, '#8c6b5b'), (172, 46, 14, 12, '#5b7c8c'), (148, 62, 12, 10, '#8c5b6f'), (164, 66, 18, 14, '#5b6b8c')]
-    for x, y, w, h, c in posters: im.rect(x, y, w, h, c); im.rect(x, y, w, 1, '#ffffff', .25); im.rect(x + 2, y + 3, w - 4, h - 6, '#ffffff', .12)
-    im.rect(150, 76, 40, 2, '#4a3025'); 
-    for k in range(6): im.rect(152 + k * 6, 70, 4, 6, r.choice(['#7a5a8c', '#8c6a4a', '#4a7a7a']))
-    im.rect(138, 46, 3, 3, '#b0a090'); im.line(140, 49, 144, 46, '#b0a090'); im.poly([(140, 44), (146, 44), (143, 50)], '#d9c9a8')
-    # desk with warm lamp light
-    im.rect(40, 74, 112, 4, '#6b5240'); im.rect(40, 78, 112, 30, '#2a2030'); im.rect(40, 74, 112, 1, '#8a6a50')
-    im.rect(42, 80, 3, 28, '#3a2a35'); im.rect(146, 80, 3, 28, '#3a2a35')
-    im.rect(0, 80, 28, 28, '#3b2d38'); im.rect(0, 80, 28, 2, '#5a4452')
-    for y in (86, 94, 102): im.rect(2, y, 24, 5, '#46364a'); im.rect(11, y + 2, 6, 1, '#8a7a6a')
-    # plant left
-    im.rect(8, 70, 10, 10, '#5a4a5a')
-    for k in range(10): im.line(13, 70, 4 + k * 2, 44 + r.randrange(0, 14), '#2b4a3f')
-    # chair silhouette
-    im.rect(86, 86, 24, 3, '#2a1f24'); im.rect(90, 89, 2, 19, '#221a1f'); im.rect(104, 89, 2, 19, '#221a1f'); im.rect(88, 60, 20, 26, '#251c22'); im.rect(88, 60, 20, 2, '#33262d')
-    # desk lamp (teal shade) + items
-    im.line(52, 74, 56, 58, '#7b8a85'); im.line(56, 58, 66, 52, '#7b8a85'); im.poly([(60, 46), (76, 52), (72, 58), (58, 52)], '#2f7f78'); im.rect(52, 74, 8, 2, '#7b8a85')
-    im.rect(68, 56, 5, 2, '#ffe9a8')
-    im.rect(80, 70, 34, 4, '#e6d7b0'); im.rect(80, 70, 34, 1, '#fff3cc'); im.rect(124, 68, 6, 6, '#d9a86f'); im.rect(132, 66, 4, 8, '#8c6a4a')
-    im.rect(98, 66, 8, 4, '#c9b890'); 
-    # warm light pool (radial blend from lamp bulb)
+def house(im, x, y, w, h, wall, roof, lit):
+    im.rect(x, y, w, h, wall); im.poly([(x - 2, y), (x + w // 2, y - h // 2), (x + w + 2, y)], roof)
+    for k in range(0, w - 4, 8):
+        im.rect(x + 3 + k, y + 4, 3, 4, lit); im.rect(x + 3 + k, y + 4, 3, 1, '#ffffff', .25)
+
+def scene(name):
+    P = PAL[name]; im = Img(); r = random.Random(5)
+    # wall
+    for y in range(H): im.rect(0, y, W, 1, P['wall'] if y % 6 < 3 else P['wall2'], 1)
+    # wood ceiling + beam
+    for y in range(0, 26): im.rect(0, y, W, 1, P['ceil'][(y // 3) % 2])
+    for x in range(0, W, 31): im.rect(x + (y := 0), 0, 1, 26, P['beam'], .35)
+    im.rect(0, 26, W, 4, P['beam']); im.rect(0, 30, W, 1, '#000000', .18)
+    # window: three panes
+    wx0, wx1, wy0, wy1 = 40, 216, 34, 92
+    im.rect(wx0 - 4, wy0 - 4, wx1 - wx0 + 8, wy1 - wy0 + 8, P['frame'])
+    top, bot = P['sky']
+    for y in range(wy0, wy1):
+        t = (y - wy0) / (wy1 - wy0); im.rect(wx0, y, wx1 - wx0, 1, tuple(int(top[i] + (bot[i] - top[i]) * t) for i in range(3)))
+    if P['stars']:
+        for _ in range(14): im.px(r.randrange(wx0 + 2, wx1 - 2), r.randrange(wy0 + 1, wy0 + 20), '#fff4d6', .9)
+    for cx, cy, cw in ((52, 46, 22), (120, 42, 26), (186, 50, 20)):
+        im.ell(cx + cw // 2, cy + 3, cw // 2, 3, P['cloud'], .9); im.ell(cx + cw // 3, cy + 1, cw // 4, 3, P['cloud'], .9)
+    # village silhouette
+    for x in range(wx0, wx1, 6): im.rect(x, 70 + int(3 * math.sin(x / 9)), 7, 22, P['hill'])
+    houses = [(46, 66, 18, 22, P['wallH'], P['roofA']), (84, 70, 14, 18, P['wallH'], P['roofB']), (108, 60, 20, 28, P['wallH'], P['roofA']),
+              (134, 66, 16, 22, P['wallH'], P['roofB']), (172, 58, 22, 30, P['wallH'], P['roofA']), (198, 70, 14, 18, P['wallH'], P['roofB'])]
+    for hx, hy, hw, hh, w_, ro in houses: house(im, hx, hy, hw, hh, w_, ro, P['lit'])
+    for tx in (60, 150, 206): im.ell(tx, 76, 7, 9, P['tree']); im.ell(tx + 4, 70, 6, 8, P['tree'])
+    im.rect(wx0, wy1 - 4, wx1 - wx0, 4, P['tree'], .55)
+    for x in (92, 164): im.rect(x, wy0, 4, wy1 - wy0, P['frame']); im.rect(x, wy0, 1, wy1 - wy0, '#ffffff', .15)
+    im.rect(wx0 - 5, wy1 + 4, wx1 - wx0 + 10, 3, P['deskTop'])   # sill
+    # desk (left to center)
+    im.rect(6, 94, 150, 5, P['deskTop']); im.rect(6, 99, 150, 2, P['desk']); im.rect(6, 94, 150, 1, '#ffffff', .25)
+    im.rect(8, 101, 30, 28, P['desk']); im.rect(8, 101, 30, 1, '#ffffff', .2)
+    for y in (104, 113, 122): im.rect(10, y, 26, 7, '#000000', .15); im.rect(20, y + 3, 6, 1, '#e8c9a0')
+    im.rect(142, 101, 4, 28, P['desk']); im.rect(44, 101, 3, 28, P['desk'])
+    # items on desk: books, mug, plant, frame, lamp
+    for k, c in enumerate(('#6b8fc9', '#d9704a', '#8bbf7a', '#e8c14e')): im.rect(8, 88 - k * 5, 22 - k * 2, 5, c); im.rect(8, 88 - k * 5, 22 - k * 2, 1, '#ffffff', .3)
+    im.rect(104, 84, 8, 10, '#e8d4c0'); im.rect(112, 86, 3, 5, '#e8d4c0'); im.rect(105, 84, 6, 1, '#7a5a4a')
+    im.rect(122, 82, 14, 12, '#c9805f'); im.rect(122, 82, 14, 2, '#e0a07f')
+    for dx, dy, rx, ry in ((-6, -8, 8, 3), (8, -10, 8, 3), (0, -16, 5, 7), (-10, -16, 5, 3)): im.ell(129 + dx, 80 + dy, rx, ry, P['tree'] if name == 'dusk' else '#5fa872'); 
+    im.rect(142, 74, 12, 16, '#e8c9a0'); im.rect(144, 76, 8, 12, '#a98b78'); im.rect(142, 74, 12, 1, '#ffffff', .3)
+    # chair
+    im.rect(52, 82, 3, 34, P['chair']); im.rect(76, 82, 3, 34, P['chair']); im.rect(52, 82, 27, 3, P['chair'])
+    for x in (58, 64, 70): im.rect(x, 85, 2, 18, P['chair'])
+    im.rect(50, 104, 31, 4, P['desk']); im.rect(52, 108, 3, 18, P['chair']); im.rect(76, 108, 3, 18, P['chair'])
+    # floor with planks
+    for y in range(128, H):
+        im.rect(0, y, W, 1, P['floor'][((y - 128) // 4) % 2])
+    im.rect(0, 126, W, 2, '#000000', .25)
+    for y0 in range(128, H, 4):
+        for x in range((y0 * 7) % 40, W, 40): im.rect(x, y0, 1, 4, '#000000', .2)
+    im.ell(30, 136, 8, 2, '#d9b8a0'); im.ell(60, 140, 7, 2, '#d9b8a0'); im.rect(6, 132, 18, 4, '#5a7aa8'); im.rect(6, 128, 16, 4, '#d9704a')  # slippers/books
+    # bed (right)
+    im.rect(166, 104, 90, 6, P['bed']); im.rect(166, 110, 90, 18, P['bed'], .8)
+    im.poly([(170, 100), (232, 100), (250, 108), (250, 124), (170, 124)], P['blanket']); im.rect(170, 100, 62, 2, '#ffffff', .25)
+    for k in range(8): im.rect(176 + k * 8, 106 + (k % 2) * 3, 6, 2, '#000000', .1)
+    im.poly([(226, 94), (252, 90), (256, 102), (236, 106)], P['pillow']); im.rect(248, 76, 8, 36, P['bed'])
+    # nightstand + glowing lamp
+    im.rect(236, 112, 20, 26, P['desk']); im.rect(236, 112, 20, 2, P['deskTop']); im.rect(240, 120, 12, 2, '#000000', .2); im.rect(240, 128, 12, 2, '#000000', .2)
+    for rr in range(18, 0, -2): im.ell(246, 104, rr, rr, P['glow'], .05 + (18 - rr) * 0.012)
+    im.ell(246, 104, 6, 6, P['glow'])
+    # black cat
+    im.ell(204, 120, 11, 6, '#1b1b24'); im.ell(194, 114, 6, 5, '#1b1b24'); im.poly([(189, 111), (191, 105), (194, 110)], '#1b1b24'); im.poly([(195, 110), (198, 105), (199, 111)], '#1b1b24')
+    im.rect(191, 113, 2, 2, '#ffffff'); im.rect(196, 113, 2, 2, '#ffffff'); im.line(214, 118, 222, 108, '#1b1b24'); im.line(215, 118, 223, 108, '#1b1b24'); im.rect(190, 125, 3, 3, '#1b1b24'); im.rect(206, 126, 3, 2, '#1b1b24')
+    if P['tint']:
+        t = P['tint']
+        for y in range(H):
+            for x in range(W): im.px(x, y, t[:3], t[3])
+        for y in range(H):
+            for x in range(W):
+                d = math.hypot((x - 246) * .9, y - 104)
+                if d < 60: im.px(x, y, (255, 190, 110), (1 - d / 60) ** 2 * .35)
+    # soft edge darkening toward the outer margins gives the column a place to sit
     for y in range(H):
         for x in range(W):
-            d = math.hypot((x - 70) * 0.8, (y - 58)); 
-            if d < 44: im.px(x, y, (255, 190, 100), max(0, (1 - d / 44)) ** 1.6 * 0.42)
-    im.ell(110, 76, 34, 4, (255, 200, 120), .18)
-    # vignette
-    for y in range(H):
-        for x in range(W):
-            d = math.hypot((x - 96) / 96, (y - 54) / 62); 
-            if d > .75: im.px(x, y, (8, 8, 20), min(.5, (d - .75) * 1.2))
+            d = abs(x - W / 2) / (W / 2)
+            if d < .5: im.px(x, y, (0, 0, 0), (0.5 - d) * .35)
     return im
 
 if __name__ == '__main__':
-    light().save('assets/scene-light.png'); dark().save('assets/scene-dark.png'); print('ok')
+    scene('day').save('assets/scene-light.png'); scene('dusk').save('assets/scene-dark.png'); print('ok')
