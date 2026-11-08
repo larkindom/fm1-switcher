@@ -17,6 +17,13 @@ Cards from the hub have a ▶ that opens that firmware in an embedded panel (or 
 ## Saves (backup and restore, FM1 Open only)
 **Back up** reads the FM-1's current project, samples and voice banks through M-VAVE's project protocol and keeps them under **My saves** (this browser) and as a `fm1-backup-DATE.json` download. **Restore** writes a save back and reads each part back to check it; it only works when the FM-1 runs the same firmware the save came from, because formats differ between firmwares. It works only under the official **FM1 Open** firmware, covers the current project (not the 16 project slots), and is not a whole-flash image, so it does not cover a firmware that can't save or update on your flash chip. Library resets never touch saves. Use a download-mode tool such as FM-SWITCH on a Mac for whole-flash backups, and the hub's rescue page for a firmware that won't update.
 
+## More features
+- **Backup & rescue tools** and **More FM-1 tools** panels link whole-flash backup and rescue tools (a web page can't read the whole flash).
+- Cards: ★ favourite, ✎ the firmware's own editor, ⓘ details (author, licence, release notes, source, the hub's "built from source" check), ▶ emulator, and an "updated from" badge for two weeks after a newer release replaces an older one.
+- Search, filters (kind, favourites, hide older-chip firmware) and sorting (A-Z, most installed, newest, most starred).
+- A banner explains update mode and the hold-OCT- rescue start when no FM-1 is found or it is stuck in its update loader.
+- **Back to official V15** from a community firmware goes through the community updater, as the hub does. Not tested on hardware.
+
 ## Colours
 The palette button picks one of six colourways from the device: Cream, Lilac, Graphite, Orange, Blue, Mint.
 

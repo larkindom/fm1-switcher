@@ -55,6 +55,11 @@ a{color:inherit}
 .plate,p.sub,h2,label.adv,#msg:not(:empty),#hist:not(:empty){background:var(--card);border-radius:6px;padding:6px 12px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.25)}
 h1{display:inline-block;background:var(--card);border-radius:6px;padding:4px 14px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.25);text-shadow:none}
 p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
+.star{position:absolute;top:6px;right:6px;font-size:18px;line-height:1;padding:2px 7px}
+.card .row{flex-wrap:wrap}.card .row .p{flex:1 1 100%;order:-1}.card .row>*:not(.p){flex:1}.ic{padding:6px 10px}
+.tools{margin:6px 0 0;padding-left:18px}.tools li{margin:6px 0}
+#filters{gap:16px}#filters input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:6px 10px;box-shadow:0 0 0 2px var(--edge);flex:1;min-width:160px}
+#filters label{font-size:13px}#notice{margin:0 3px 18px}
 .sw{width:104px;padding:0;background:none;box-shadow:none;border:0;text-align:center;color:var(--ink)}
 .sw .dev{display:block;height:58px;border-radius:12px;background:var(--b);position:relative;box-shadow:0 0 0 3px var(--edge)}
 .sw .dev::before{content:'';position:absolute;left:34px;top:8px;width:20px;height:16px;border-radius:3px;background:#1d1d1f}
@@ -76,10 +81,12 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
 </div>
 
 <div class="bar" id="tools">
-  <label>Sort <select id="sort"><option value="name">A–Z</option><option value="installs">Most installed</option></select></label>
+  <label>Sort <select id="sort"><option value="name">A–Z</option><option value="installs">Most installed</option><option value="newest">Newest</option><option value="stars">Most starred</option></select></label>
   <label>Show <select id="kind"><option value="">All</option></select></label>
 </div>
 </div>
+<div id="notice" class="plate" hidden></div>
+<div class="bar" id="filters" style="margin:0 3px 18px"><input id="q" type="search" placeholder="Search firmware…" aria-label="Search firmware"><label><input type="checkbox" id="hideOld"> Hide older-chip firmware</label></div>
 <div id="list" class="grid"></div>
 <section id="old" hidden>
   <h2>Older FM-1 flash chip only</h2>
@@ -95,16 +102,33 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
 
 <p class="sub" style="margin:10px 3px">Not in the hub, installs from its own site: <a href="https://baudgirl.com/work/FM-1+VA">Baud Girl FM-1+VA</a>.</p>
 <p class="sub" style="margin:10px 3px">▶ on a card opens it in the <a href="https://joakimeriksson.github.io/fm1-emu/">fm1-emu</a> browser emulator, no FM-1 needed. The same project also ships <a href="https://github.com/joakimeriksson/fm1-emu/releases/latest">AU / VST3 plugins</a> for your DAW.</p>
+<details id="rescue"><summary>Backup &amp; rescue tools</summary>
+<p class="sub" style="margin:8px 0">A web page can't read the whole flash. These tools can, and they cover the older-chip risk. Back up before you write anything to the FM-1.</p>
+<ul class="tools">
+<li><a href="https://github.com/jvitkauskas/m-flasher/releases" target="_blank" rel="noopener">M-Flasher</a>: puts the FM-1 in download mode, saves the whole flash, installs a .fwsc. Works with broken firmware and the newer chip.</li>
+<li><a href="https://github.com/keremimo/melodee/blob/main/docs/RECOVERY.md" target="_blank" rel="noopener">Melodee's fm1-recover</a>: command-line recovery with a full backup first. Windows, Mac, Linux.</li>
+<li><a href="https://github.com/Quixotic7/MvaveFM1Unbricker" target="_blank" rel="noopener">MvaveFM1Unbricker</a>: full flash backup (read twice, compared), then write and verify.</li>
+<li><a href="https://thefirmwarehub.com/tools/#rescue" target="_blank" rel="noopener">The hub's Rescue</a>: restores a hub firmware through the chip's bootloader (Linux, Python).</li>
+<li><a href="https://github.com/kurogedelic/FM-1-transporter" target="_blank" rel="noopener">FM-1 Transporter</a>: a small hardware board that reads and writes the whole flash.</li>
+</ul></details>
+<details id="more"><summary>More FM-1 tools</summary><ul class="tools">
+<li><a href="https://open.m-vave.com/fm1-workbench" target="_blank" rel="noopener">M-VAVE Workbench</a>: editor for FM1 Open projects, sounds and samples.</li>
+<li><a href="https://fm1-editor.com/" target="_blank" rel="noopener">FM1 Editor &amp; Librarian</a>: DX7 voice editor in the browser.</li>
+<li><a href="https://github.com/pfkellogg/fm1-mirror/releases/latest" target="_blank" rel="noopener">FM-1 Mirror</a>: shows the FM-1's screen on your computer.</li>
+<li><a href="https://konsumer.github.io/fm1buddy/" target="_blank" rel="noopener">fm1buddy</a>: a USB MIDI host box that also switches firmware from an SD card.</li>
+<li><a href="https://github.com/simonjohansson/fm1-emulator/releases/latest" target="_blank" rel="noopener">fm1-emulator</a>: desktop emulator for Mac and Linux.</li>
+</ul></details>
 <details id="savesBox"><summary>My saves<span id="saveCount"></span></summary>
 <p class="sub" style="margin:8px 0">Backups of your project, samples and voice banks, kept in this browser and also downloaded as files. Restore works on the same firmware only. Drop an exported save into the box above to add it back.</p>
 <div id="saveList"></div></details>
 <div id="hist" class="sub" style="margin:10px 3px"></div>
-<label class="adv"><input type="checkbox" id="force"> Allow switching from firmware this app doesn't recognise (needed for stock V15 and most community firmware)</label>
+<label class="adv"><input type="checkbox" id="force"> Allow switching from firmware this app doesn't recognise (official-format firmware only; community firmware ignores this)</label>
 <div class="prog"><i id="bar"></i></div>
 <div id="msg"></div>
 <p class="sub">Back up your projects and samples before switching: formats are not compatible between firmwares. Keep the FM-1 powered during a switch. Power loss mid-write can leave it unbootable.</p>
 </main>
 <dialog id="palettes"><div class="emuBar"><b>Colours</b><button id="palClose">Close</button></div><div id="palGrid"><button class="sw" data-p="cream" aria-pressed="false" style="--b:#e7e0d4;--k:#3f4247"><span class="dev"></span>Cream</button><button class="sw" data-p="lilac" aria-pressed="false" style="--b:#d98fd0;--k:#9b5fcb"><span class="dev"></span>Lilac</button><button class="sw" data-p="graphite" aria-pressed="false" style="--b:#3b3b3d;--k:#161618"><span class="dev"></span>Graphite</button><button class="sw" data-p="orange" aria-pressed="false" style="--b:#e8501a;--k:#b8381f"><span class="dev"></span>Orange</button><button class="sw" data-p="blue" aria-pressed="false" style="--b:#ece9e1;--k:#3f6290"><span class="dev"></span>Blue</button><button class="sw" data-p="mint" aria-pressed="false" style="--b:#34363a;--k:#5ccfb4"><span class="dev"></span>Mint</button></div></dialog>
+<dialog id="info"><div class="emuBar"><b id="infoTitle"></b><button id="infoClose">Close</button></div><div id="infoBody" style="padding:4px 12px 12px"></div></dialog>
 <dialog id="settings"><div class="emuBar"><b>Settings</b><button id="setClose">Close</button></div>
   <p class="sub" style="margin:4px 12px">Delete firmware from this browser's library. Deleted firmware stays gone until you reset.</p>
   <div id="setList" style="padding:0 12px"></div>
@@ -114,9 +138,9 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
   <div class="emuBox"><div class="emuBar"><b id="emuTitle"></b><span><a id="emuOpen" target="_blank" rel="noopener">Open in new tab</a> <button id="emuClose">Close</button></span></div>
   <iframe id="emuFrame" allow="autoplay; midi" title="FM-1 emulator"></iframe></div>
 </div>
-<script src="webupdate.js?v=8"></script>
-<script src="felucca.js?v=8"></script>
-<script src="samples-core.js?v=8"></script>
-<script src="app.js?v=8"></script>
+<script src="webupdate.js?v=10"></script>
+<script src="felucca.js?v=10"></script>
+<script src="samples-core.js?v=10"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

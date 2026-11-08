@@ -62,25 +62,30 @@ const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel
 // An older release of the same hub firmware (stored with hubId, or before hubId existed: same name prefix and product).
 const sameFw = (m, f) => m.pkg && m.sha256 !== f.sha256 && (m.hubId ? m.hubId === f.id : m.label.startsWith(f.name + ' '));
 async function pruneOlder(f) { for (const m of await all()) if (sameFw(m, f)) await del(m.sha256); }
-async function addHub(id) {
-  const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
+const infoOf = f => ({ what: f.what, author: f.author, editor: f.editor, site: f.site, source: f.source, release: f.release, date: f.date, stars: f.stars || 0,
+  built: !!(f.provenance && f.provenance.verified === true && f.provenance.sha256 === f.sha256 && /^[0-9a-f]{40}$/.test(f.provenance.commit || '')), commit: f.provenance && f.provenance.commit });
+async function addHub(id, cat) {
+  cat = cat || await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
   const f = cat.firmwares.find(x => x.id === id);
   if (!f || !f.pkg) throw new Error(id + ' is not in the hub catalogue');
   const r = await fetch(HUB + f.pkg); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
   const pkg = new Uint8Array(await r.arrayBuffer());
   if (Felucca.productOf(pkg) !== f.product || await Felucca.sha256hex(pkg) !== f.sha256) throw new Error('package does not match the hub catalogue');
-  await put({ sha256: f.sha256, label: `${f.name} ${f.version}`, release_version: f.version, product: f.product,
+  const olds = (await all()).filter(m => sameFw(m, f));
+  await put({ sha256: f.sha256, label: `${f.name} ${f.version}`, info: infoOf(f), updatedFrom: olds[0] && olds[0].release_version, updatedAt: olds.length ? Date.now() : undefined, release_version: f.version, product: f.product,
     bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other', pkg });
   await pruneOlder(f); await render();
 }
 async function runFelucca(m) {
-  const up = new Felucca.Updater(access, console.log), image = Felucca.logicalImage(m.pkg), total = 2 * Math.ceil(image.length / 512);
+  const bytes = m.pkg || ub64(m.data), stock = m.kind === 'stock';   // stock V15 comes back through the community updater, as the hub does
+  if (stock && Felucca.productOf(bytes) !== m.product) throw new Error('not the official V15 package');
+  const up = new Felucca.Updater(access, console.log), image = Felucca.logicalImage(bytes), total = 2 * Math.ceil(image.length / 512);
   const step = (k, a) => {
     const t = { start: 'Asking the FM-1…', verify: 'The FM-1 reads the package…', loader: 'Update loader starting (the FM-1 restarts)…', write: 'Writing. Do not unplug.', reboot: 'Restarting…', done: 'Done.' }[k];
     if (t) msg(t); if (typeof a === 'number') $('bar').style.width = Math.min(100, (k === 'write' ? total / 2 + a : a) / total * 100) + '%';
   };
   const ota = await up.find(id => /^ota-/i.test(id.model));
-  if (ota) { ota.link.close(); if (!(await up.resume(image, step))) throw new Error('stopped'); }
+  if (ota) { ota.link.close(); if (!(await up.resume(image, step, stock ? { product: m.product } : {}))) throw new Error('stopped'); }
   else await up.install(image, m.product, step);
 }
 
@@ -175,16 +180,26 @@ async function probe() {
   try { const d = await u.discover(true); identity = d ? d.identity : null; if (d) await d.link.close(); }
   catch (e) { identity = null; }
   $('backup').disabled = !identity; $('dot').className = 'dot' + (identity ? ' on' : ''); $('dot').title = identity ? 'Connected' : 'Not connected'; $('dev').textContent = identity || '';
-  render();
+  updateNotice(); render();
+}
+function updateNotice() {
+  const n = $('notice'); n.hidden = true; if (!access) return;
+  if (!identity) n.textContent = 'No FM-1 found. Plug it in over USB, switch it on, and close other MIDI apps and tabs. If it still does not appear, hold OCT\u2212 while switching it on to start it in update mode.';
+  else if (/^ota-/i.test(identity)) n.textContent = 'The FM-1 is in update mode (' + identity + '). Pick the firmware you were installing to finish the update.';
+  else return;
+  n.hidden = false;
 }
 
 async function render() {
   const items = await all(); $('list').replaceChildren(); $('listOld').replaceChildren();
   const kinds = [...new Set(items.map(m => m.kind).filter(Boolean))].sort(), sel = $('kind');
-  if (sel.options.length - 1 !== kinds.length) sel.replaceChildren(new Option('All', ''), ...kinds.map(k => new Option(k, k)));
+  if (sel.options.length - 2 !== kinds.length) sel.replaceChildren(new Option('All', ''), new Option('★ Favourites', '__fav'), ...kinds.map(k => new Option(k, k)));
   sel.value = pref('kind'); $('sort').value = pref('sort') || 'name';
-  const by = $('sort').value === 'installs' ? (a, b) => (b.installs || 0) - (a.installs || 0) : (a, b) => a.label.localeCompare(b.label);
-  for (const m of items.filter(m => !sel.value || m.kind === sel.value).sort(by)) {
+  const S = { installs: (a, b) => (b.installs || 0) - (a.installs || 0), stars: (a, b) => ((b.info && b.info.stars) || 0) - ((a.info && a.info.stars) || 0),
+    newest: (a, b) => ((b.info && b.info.date) || '').localeCompare((a.info && a.info.date) || ''), name: (a, b) => a.label.localeCompare(b.label) };
+  const by = S[$('sort').value] || S.name, q = $('q').value.trim().toLowerCase(), favs = getFavs(), hideOld = $('hideOld').checked;
+  const hay = m => [m.label, m.kind, m.info && m.info.what, m.info && m.info.author].join(' ').toLowerCase();
+  for (const m of items.filter(m => (!sel.value || (sel.value === '__fav' ? favs.has(favKey(m)) : m.kind === sel.value)) && (!q || hay(m).includes(q)) && !(hideOld && m.chip === 'old')).sort(by)) {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
     const src = m.hubId ? HUB + (m.card ? m.card.replace(/^\//, '') : `img/w0/${m.hubId}.webp`) : 'assets/fm1.svg';
     const pic = src ? `<img alt="" src="${esc(src)}">` : esc(m.label.slice(0, 2));
@@ -196,13 +211,37 @@ async function render() {
     const sw = Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
     sw.onclick = () => run(m);
     const row = el.querySelector('.row');
+    const star = Object.assign(document.createElement('button'), { textContent: getFavs().has(favKey(m)) ? '★' : '☆', className: 'star', title: 'Favourite', onclick: () => { toggleFav(m); render(); } });
+    el.querySelector('.pic').append(star);
+    if (m.updatedAt && Date.now() - m.updatedAt < 14 * 864e5) el.querySelector('.t').insertAdjacentHTML('beforeend', `<br><span class="badge">updated from ${esc(String(m.updatedFrom || 'older'))}</span>`);
     if (m.hubId) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in the browser emulator (fm1-emu), no FM-1 needed', href: EMU + '?fw=' + encodeURIComponent(m.hubId), target: '_blank', rel: 'noopener', className: 'try', onclick: e => { e.preventDefault(); openEmu(m); } }));
+    if (m.info && /^https:\/\//.test(m.info.editor || '')) row.append(Object.assign(document.createElement('a'), { textContent: '✎', title: 'Open its editor / backup tool', href: m.info.editor, target: '_blank', rel: 'noopener', className: 'try' }));
+    row.append(Object.assign(document.createElement('button'), { textContent: 'ⓘ', title: 'Details', className: 'ic', onclick: () => showInfo(m) }));
     row.append(sw); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
   }
   $('old').hidden = !items.some(m => m.chip === 'old');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
 }
+const favKey = m => m.hubId || m.sha256;
+const getFavs = () => { try { return new Set(JSON.parse(localStorage.getItem('fm1-favs') || '[]')); } catch { return new Set(); } };
+const toggleFav = m => { const f = getFavs(), k = favKey(m); f.has(k) ? f.delete(k) : f.add(k); try { localStorage.setItem('fm1-favs', JSON.stringify([...f])); } catch {} };
+function showInfo(m) {
+  const i = m.info || {}, box = $('infoBody'); box.replaceChildren();
+  const row = (k, v) => { if (!v) return; const d = document.createElement('div'); d.className = 'setRow'; d.append(Object.assign(document.createElement('span'), { textContent: k }), Object.assign(document.createElement('span'), { textContent: v })); box.append(d); };
+  $('infoTitle').textContent = m.label;
+  if (i.what) box.append(Object.assign(document.createElement('p'), { textContent: i.what, className: 'sub', style: 'margin:6px 0' }));
+  row('Author', i.author); row('Licence', m.lic); row('Released', i.date); row('Identity', m.product); row('Hub installs', m.installs ? String(m.installs) : ''); row('GitHub stars', i.stars ? String(i.stars) : '');
+  row('Flash chip', { old: 'Older chip only: saving may fail on newer FM-1s', new: 'Both FM-1 flash chips', any: 'Either chip' }[m.chip]);
+  row('Built from source', i.built ? 'Yes, GitHub signed this exact file' + (i.commit ? ` (commit ${i.commit.slice(0, 7)})` : '') : m.pkg ? 'Not verified by the hub' : '');
+  const links = document.createElement('div'); links.className = 'setRow';
+  for (const [t, u] of [['Release notes', i.release], ['Source', i.source], ['Project site', i.site], ['Editor', i.editor]]) if (/^https:\/\//.test(u || '')) links.append(Object.assign(document.createElement('a'), { textContent: t, href: u, target: '_blank', rel: 'noopener' }));
+  if (links.children.length) box.append(links);
+  $('info').showModal();
+}
+$('infoClose').onclick = () => $('info').close();
+$('q').oninput = () => render(); $('hideOld').onchange = e => { pref('hideOld', e.target.checked ? '1' : ''); render(); };
 const pref = (k, v) => { try { if (v !== undefined) localStorage.setItem('fm1-' + k, v); return localStorage.getItem('fm1-' + k) || ''; } catch { return ''; } };
+$('hideOld').checked = !!pref('hideOld');
 $('sort').onchange = e => { pref('sort', e.target.value); render(); };
 $('kind').onchange = e => { pref('kind', e.target.value); render(); };
 const PALETTES = ['cream', 'lilac', 'graphite', 'orange', 'blue', 'mint'];
@@ -231,7 +270,8 @@ async function run(meta) {
   if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
-    if (meta.pkg) { await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
+    const community = identity && !/^(FM1_OFFICIAL_OPEN|FM1_COMMUNITY_\d+|FM-1_8\d{6}|FM-1_015)$/.test(identity);
+    if (meta.pkg || (meta.kind === 'stock' && community)) { if (meta.kind === 'stock') await FM1Web.prepare(meta); await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
     const pkg = await FM1Web.prepare(meta);
     updater = new FM1Web.Updater(access, pkg, (t, p) => { msg(String(t)); if (p != null) $('bar').style.width = p + '%'; });
     const r = await updater.connect({ force });
@@ -258,8 +298,8 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   if (!have.has('7e7b6d260163cdf9d716f7fab44f19be600edeffcd390de74370b83c917fd0c6')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
   if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
-  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined || m.card === undefined)) await put({ ...m, hubId: f.id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other' }); }
-  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (!f) continue; if (have.has(f.sha256)) await pruneOlder(f); else jobs.push(() => addHub(id)); }
+  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined || m.card === undefined || m.info === undefined)) await put({ ...m, info: infoOf(f), hubId: f.id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other' }); }
+  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (!f) continue; if (have.has(f.sha256)) await pruneOlder(f); else jobs.push(() => addHub(id, cat)); }
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
   if (jobs.length && !$('msg').className) msg('');
