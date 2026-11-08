@@ -119,7 +119,7 @@ async function probe() {
   const u = new FM1Web.Updater(access, { loaderIdentity: '', product: '', family: 7, build_id: '' });
   try { const d = await u.discover(true); identity = d ? d.identity : null; if (d) await d.link.close(); }
   catch (e) { identity = null; }
-  $('backup').disabled = !identity; $('dot').className = 'dot' + (identity ? ' on' : ''); $('dev').textContent = identity ? 'FM-1 connected: ' + identity : 'No FM-1 found';
+  $('backup').disabled = !identity; $('dot').className = 'dot' + (identity ? ' on' : ''); $('dot').title = identity ? 'Connected' : 'Not connected'; $('dev').textContent = identity || '';
   render();
 }
 
