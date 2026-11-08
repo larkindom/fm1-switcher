@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FM-1 Switcher</title>
+<script>try{var t=localStorage.getItem("fm1-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap">
 <style>:root{--bg:#cfe6c6;--tex:rgba(40,90,70,.07);--card:#f8f6e2;--ink:#243a30;--edge:#2f5d50;--hi:#ffffff;--shade:#cfcab0;--acc:#2f9e6b;--accink:#fff;--warn:#b3261e;--line:#a9c7a0;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:root{--bg:#12211b;--tex:rgba(255,255,255,.035);--card:#1d382d;--ink:#e6f0dc;--edge:#07110d;--hi:#4b7a67;--shade:#142a21;--acc:#4fcf92;--accink:#08251a;--warn:#ff8a80;--line:#2c5242}}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12211b;--tex:rgba(255,255,255,.035);--card:#1d382d;--ink:#e6f0dc;--edge:#07110d;--hi:#4b7a67;--shade:#142a21;--acc:#4fcf92;--accink:#08251a;--warn:#ff8a80;--line:#2c5242}}
+:root[data-theme=dark]{--bg:#12211b;--tex:rgba(255,255,255,.035);--card:#1d382d;--ink:#e6f0dc;--edge:#07110d;--hi:#4b7a67;--shade:#142a21;--acc:#4fcf92;--accink:#08251a;--warn:#ff8a80;--line:#2c5242}
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);font:17px/1.45 'Pixelify Sans',ui-monospace,monospace;background-color:var(--bg);
  background-image:conic-gradient(var(--tex) 25%,#0000 0 50%,var(--tex) 0 75%,#0000 0);background-size:16px 16px;image-rendering:pixelated;font-variant-ligatures:none}
@@ -35,6 +38,8 @@ button:disabled{opacity:.45;cursor:default}
 #emu{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;z-index:10}#emu[hidden]{display:none}
 .emuBox{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge);width:min(1000px,100%);height:min(780px,100%);display:flex;flex-direction:column;overflow:hidden}
 .emuBar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}#emuFrame{flex:1;border:0;background:#000}
+dialog{background:var(--card);color:var(--ink);border:0;border-radius:6px;box-shadow:0 0 0 3px var(--edge);padding:8px;width:min(520px,92vw);max-height:80vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.55)}
+.setRow{display:flex;justify-content:space-between;align-items:center;padding:4px 0}#gear{font-size:20px;padding:2px 10px}
 .badge{display:inline-block;font-size:12px;border-radius:3px;padding:0 6px;box-shadow:0 0 0 2px var(--line)}.badge.w{box-shadow:0 0 0 2px var(--warn);color:var(--warn)}
 details{margin:26px 3px 14px;padding:10px 14px}summary{cursor:pointer}
 .drop{box-shadow:none;background:none;border:2px dashed var(--edge);border-radius:6px;padding:16px;text-align:center;margin:12px 0}.drop.over{border-color:var(--acc)}
@@ -47,7 +52,7 @@ a{color:inherit}
 </head>
 <body>
 <main>
-<h1>FM-1 Switcher</h1>
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><h1>FM-1 Switcher</h1><button id="gear" title="Settings" aria-label="Settings">⚙</button></div>
 <p class="sub">Plug your FM-1 into your Mac over USB-C, pick a firmware, switch. Chrome or Edge only (Web MIDI).</p>
 
 <div class="bar">
@@ -81,6 +86,12 @@ a{color:inherit}
 <div id="msg"></div>
 <p class="sub">Back up your projects and samples before switching: formats are not compatible between firmwares. Keep the FM-1 powered during a switch. Power loss mid-write can leave it unbootable.</p>
 </main>
+<dialog id="settings"><div class="emuBar"><b>Settings</b><button id="setClose">Close</button></div>
+  <p class="sub" style="margin:4px 12px">Delete firmware from this browser's library. Deleted firmware stays gone until you reset.</p>
+  <div class="setRow" style="padding:4px 12px"><span>Theme</span><select id="theme"><option value="auto">Auto (system)</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+  <div id="setList" style="padding:0 12px"></div>
+  <div style="padding:12px;display:flex;gap:8px;flex-wrap:wrap"><button id="setReset">Reset library</button><button id="setHist">Clear switch history</button></div>
+</dialog>
 <div id="emu" hidden>
   <div class="emuBox"><div class="emuBar"><b id="emuTitle"></b><span><a id="emuOpen" target="_blank" rel="noopener">Open in new tab</a> <button id="emuClose">Close</button></span></div>
   <iframe id="emuFrame" allow="autoplay; midi" title="FM-1 emulator"></iframe></div>

@@ -16,6 +16,8 @@ const tx = async (mode, fn) => { const d = await db; return new Promise((ok, no)
   const q = fn(d.transaction('fw', mode).objectStore('fw')); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); };
 const all = () => tx('readonly', s => s.getAll());
 const put = m => tx('readwrite', s => s.put(m));
+const removed = () => { try { return new Set(JSON.parse(localStorage.getItem('fm1-removed') || '[]')); } catch { return new Set(); } };
+const setRemoved = s => { try { localStorage.setItem('fm1-removed', JSON.stringify([...s])); } catch {} };
 const del = k => tx('readwrite', s => s.delete(k));
 
 const msg = (t, err) => { $('msg').textContent = t; $('msg').className = err ? 'err' : ''; };
@@ -82,6 +84,25 @@ async function backup() {
 }
 $('backup').onclick = backup;
 
+// --- settings: delete firmware, reset ---
+async function openSettings() {
+  const box = $('setList'); box.replaceChildren();
+  for (const m of (await all()).sort((x, y) => x.label.localeCompare(y.label))) {
+    const row = document.createElement('div'); row.className = 'setRow'; row.append(Object.assign(document.createElement('span'), { textContent: m.label }));
+    row.append(Object.assign(document.createElement('button'), { textContent: 'Delete', disabled: busy, onclick: async () => {
+      if (!confirm(`Delete "${m.label}" from this browser's library?`)) return;
+      await del(m.sha256); const r = removed(); r.add(m.sha256); setRemoved(r); await render(); openSettings(); } }));
+    box.append(row);
+  }
+  if (!box.children.length) box.textContent = 'The library is empty.';
+  if (!$('settings').open) $('settings').showModal();
+}
+$('gear').onclick = openSettings;
+$('setClose').onclick = () => $('settings').close();
+$('setHist').onclick = () => { try { localStorage.removeItem('fm1-history'); } catch {} showHist(); };
+$('setReset').onclick = async () => { if (!confirm('Delete everything in the library and re-download the featured firmwares?')) return;
+  try { localStorage.removeItem('fm1-removed'); } catch {} for (const m of await all()) await del(m.sha256); location.reload(); };
+
 // --- device ---
 async function connect() {
   try {
@@ -123,6 +144,8 @@ async function render() {
 const pref = (k, v) => { try { if (v !== undefined) localStorage.setItem('fm1-' + k, v); return localStorage.getItem('fm1-' + k) || ''; } catch { return ''; } };
 $('sort').onchange = e => { pref('sort', e.target.value); render(); };
 $('kind').onchange = e => { pref('kind', e.target.value); render(); };
+$('theme').value = pref('theme') || 'auto';
+$('theme').onchange = e => { const v = e.target.value; pref('theme', v === 'auto' ? '' : v); v === 'auto' ? delete document.documentElement.dataset.theme : (document.documentElement.dataset.theme = v); };
 // Flash history: what this browser switched to, newest first.
 const hist = () => { try { return JSON.parse(localStorage.getItem('fm1-history') || '[]'); } catch { return []; } };
 const showHist = () => { $('hist').textContent = hist().length ? 'Recent switches: ' + hist().slice(0, 5).map(h => `${h.label} (${new Date(h.at).toLocaleDateString()})`).join(' · ') : ''; };
@@ -166,7 +189,7 @@ dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); }; dz.ondra
 dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (const f of e.dataTransfer.files) await importFile(f).catch(x => msg(f.name + ': ' + x.message, true)); };
 // First run: fill the library with the featured firmwares so the page is a plain picker.
 (async () => {
-  await render(); const have = new Set((await all()).map(m => m.sha256)), jobs = [];
+  await render(); const have = new Set([...(await all()).map(m => m.sha256), ...removed()]), jobs = [];
   if (!have.has('7e7b6d260163cdf9d716f7fab44f19be600edeffcd390de74370b83c917fd0c6')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
   if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
