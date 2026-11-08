@@ -54,7 +54,7 @@ async function addHub(id) {
   const pkg = new Uint8Array(await r.arrayBuffer());
   if (Felucca.productOf(pkg) !== f.product || await Felucca.sha256hex(pkg) !== f.sha256) throw new Error('package does not match the hub catalogue');
   await put({ sha256: f.sha256, label: `${f.name} ${f.version}`, release_version: f.version, product: f.product,
-    bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, installs: f.installs || 0, kind: f.kind || 'other', pkg });
+    bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other', pkg });
   await pruneOlder(f); await render();
 }
 async function runFelucca(m) {
@@ -131,9 +131,11 @@ async function render() {
   const by = $('sort').value === 'installs' ? (a, b) => (b.installs || 0) - (a.installs || 0) : (a, b) => a.label.localeCompare(b.label);
   for (const m of items.filter(m => !sel.value || m.kind === sel.value).sort(by)) {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
-    const pic = m.hubId ? `<img loading="lazy" alt="" src="${HUB}img/w0/${m.hubId}.webp">` : esc(m.label.slice(0, 2));
+    const src = m.hubId ? HUB + (m.card ? m.card.replace(/^\//, '') : `img/w0/${m.hubId}.webp`) : 'assets/fm1.svg';
+    const pic = src ? `<img loading="lazy" alt="" src="${esc(src)}">` : esc(m.label.slice(0, 2));
     el.innerHTML = `<div class="pic">${pic}</div><div class="t"><b></b><small></small></div><div class="row"></div>`;
     el.querySelector('b').textContent = m.label;
+    const img = el.querySelector('.pic img'); if (img) img.onerror = () => { img.onerror = null; img.src = 'assets/fm1.svg'; };
     el.querySelector('small').textContent = `${m.product} · ${(m.bytes / 1024) | 0} KB` + (m.lic ? ' · ' + m.lic : '') + (identity === m.product ? ' · installed' : '');
     if (m.chip === 'old') el.querySelector('.t').insertAdjacentHTML('beforeend', '<br><span class="badge w" title="Only knows the first FM-1s\' Puya flash chip">old flash chip only</span>');
     const sw = Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
@@ -200,7 +202,7 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   if (!have.has('7e7b6d260163cdf9d716f7fab44f19be600edeffcd390de74370b83c917fd0c6')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
   if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
-  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined)) await put({ ...m, hubId: f.id, installs: f.installs || 0, kind: f.kind || 'other' }); }
+  for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined || m.card === undefined)) await put({ ...m, hubId: f.id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other' }); }
   for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (!f) continue; if (have.has(f.sha256)) await pruneOlder(f); else jobs.push(() => addHub(id)); }
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
