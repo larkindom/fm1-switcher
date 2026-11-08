@@ -27,8 +27,8 @@ Cards from the hub have a ▶ that opens that firmware in an embedded panel (or 
 ## Firmware not on the hub
 `EXTRAS` in `app.js` lists firmwares kept in this repo and pinned by SHA-256 (currently Garden FM, GPL-3.0, from its GitHub release; see `firmware/GARDEN.md`). They are marked "chip support unknown" because nobody has checked them.
 
-## Colours
-The palette button picks one of six colourways from the device: Cream, Lilac, Graphite, Orange, Blue, Mint.
+## The look
+The page is drawn as the FM-1 itself on a wooden desk. The LCD shows connection status, messages and progress. The COLOUR knob picks one of six device colourways (Cream, Lilac, Graphite, Orange, Blue, Mint), SORT and SHOW cycle the sort order and category, and SETUP opens settings. The buttons are CONNECT, BACK UP, and shortcuts for favourites, hiding older-chip firmware, My saves and the rescue tools. Firmware cards sit in the key tray.
 
 ## Status: untested on hardware
 - `node test.mjs FM-1_015.fwsc` checks the official parser accepts the real stock package. Nothing has been flashed by this app yet.

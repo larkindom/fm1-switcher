@@ -231,6 +231,7 @@ async function render() {
     row.append(Object.assign(document.createElement('button'), { textContent: 'ⓘ', title: 'Details', className: 'ic', onclick: () => showInfo(m) }));
     row.append(sw); $(m.chip === 'old' || m.chip === 'unknown' ? 'listOld' : 'list').append(el);
   }
+  $('bFav').classList.toggle('on', sel.value === '__fav'); $('bOld').classList.toggle('on', hideOld);
   $('old').hidden = !items.some(m => m.chip === 'old' || m.chip === 'unknown');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
 }
@@ -262,6 +263,15 @@ document.querySelectorAll('.sw').forEach(b => b.onclick = () => setPalette(b.dat
 $('palBtn').onclick = () => $('palettes').showModal();
 $('palClose').onclick = () => $('palettes').close();
 setPalette(PALETTES.includes(pref('palette')) ? pref('palette') : 'cream');
+// Device controls: the knobs cycle sort / category, the buttons are shortcuts to filters and panels. The LCD shows what changed.
+const lcdHint = t => { const h = $('hint'); h.textContent = t; h.classList.add('on'); clearTimeout(lcdHint.t); lcdHint.t = setTimeout(() => h.classList.remove('on'), 1600); };
+const cycle = (btn, sel) => { sel.selectedIndex = (sel.selectedIndex + 1) % sel.options.length; sel.dispatchEvent(new Event('change')); btn.style.setProperty('--rot', sel.selectedIndex * 48 + 'deg'); lcdHint(sel.options[sel.selectedIndex].text); };
+$('kSort').onclick = () => cycle($('kSort'), $('sort'));
+$('kShow').onclick = () => cycle($('kShow'), $('kind'));
+$('bFav').onclick = () => { const s = $('kind'); s.value = s.value === '__fav' ? '' : '__fav'; s.dispatchEvent(new Event('change')); lcdHint(s.value ? 'favourites' : 'all'); };
+$('bOld').onclick = () => { const c = $('hideOld'); c.checked = !c.checked; c.dispatchEvent(new Event('change')); lcdHint(c.checked ? 'older chip hidden' : 'older chip shown'); };
+const openPanel = id => { const d = $(id); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+$('bSaves').onclick = () => openPanel('savesBox'); $('bRescue').onclick = () => openPanel('rescue');
 // Flash history: what this browser switched to, newest first.
 const hist = () => { try { return JSON.parse(localStorage.getItem('fm1-history') || '[]'); } catch { return []; } };
 const showHist = () => { $('hist').textContent = hist().length ? 'Recent switches: ' + hist().slice(0, 5).map(h => `${h.label} (${new Date(h.at).toLocaleDateString()})`).join(' · ') : ''; };

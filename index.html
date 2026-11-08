@@ -13,80 +13,109 @@
 :root[data-palette=blue]{--bg:#ece9e1;--card:#fbfaf6;--ink:#1f2b3d;--edge:#2a3f5c;--hi:#ffffff;--shade:#d3cfc4;--acc:#3f6290;--accink:#ffffff;--line:#c9c6bc}
 :root[data-palette=mint]{--bg:#34363a;--card:#45484d;--ink:#e9f6f1;--edge:#131415;--hi:#66696f;--shade:#26282b;--acc:#5ccfb4;--accink:#0d2b25;--line:#55595f}
 *{box-sizing:border-box}
-body{margin:0;color:var(--ink);font:15px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;background-color:var(--bg);
- background:var(--bg);image-rendering:pixelated}
-main{max-width:760px;margin:0 auto;padding:24px 16px 64px}
-h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.14em;text-transform:uppercase;text-shadow:2px 2px 0 var(--shade)}
-h2{font-size:16px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:34px 3px 4px;text-shadow:2px 2px 0 var(--shade)}
-p.sub{margin:0 0 18px;opacity:.8}
-/* pixel "window": dark outline, light inner edge, offset drop shade */
-.bar,.card,.drop,details{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.18)}
-.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;margin:0}
-.topbars{display:flex;gap:14px;flex-wrap:nowrap;align-items:stretch;margin:0 3px 22px}.topbars>.bar:first-child{flex:1 1 0;min-width:0;gap:8px}.topbars>#tools{flex:0 1 auto;gap:8px}.topbars>#tools label{white-space:nowrap}.topbars>#tools select{max-width:118px}.topbars .bar{padding:10px 12px}.topbars>.bar:first-child{flex-wrap:nowrap}.topbars .bar .dev{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topbars button{flex:0 0 auto;padding:6px 10px;white-space:nowrap}
-@media (max-width:560px){.topbars{flex-wrap:wrap}.topbars>.bar:first-child{flex:1 1 100%}}.bar .dev{flex:1;min-width:160px}
-.dot{display:inline-block;width:10px;height:10px;background:#8a9a90;margin-right:8px;box-shadow:0 0 0 2px var(--edge)}.dot.on{background:#38d27a}
-select{font:inherit;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:4px 8px;box-shadow:0 0 0 2px var(--edge)}
-button{font:inherit;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:6px 14px;cursor:pointer;box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 var(--shade)}
-button:hover:not(:disabled){transform:translateY(-1px)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 2px var(--edge)}
-button.p{background:var(--acc);color:var(--accink);box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.35)}
-button:disabled{opacity:.45;cursor:default}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px;margin:0 3px}
-.card{display:flex;flex-direction:column;overflow:hidden;padding:6px}
-.card.cur{box-shadow:0 0 0 3px var(--acc),0 0 0 6px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 6px rgba(0,0,0,.18)}
-.card b{display:block;font-weight:700;letter-spacing:.02em}.card small{opacity:.75;font-size:12px}
-.card .pic{position:relative;aspect-ratio:4/3;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;border-radius:3px;box-shadow:0 0 0 2px var(--edge);overflow:hidden}
+body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;
+ background:radial-gradient(ellipse 90% 55% at 50% -5%,rgba(255,236,200,.38),transparent 70%),radial-gradient(ellipse 120% 80% at 50% 120%,rgba(0,0,0,.45),transparent 60%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.003 0.075' numOctaves='4' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.20 0 0 0 0 0.10 0 0 0 0 0.04 0 0 0 1.1 -0.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3Crect width='100%25' height='160' fill='%23ffd9a0' opacity='.06'/%3E%3Crect y='160' width='100%25' height='160' fill='%23000' opacity='.07'/%3E%3Crect y='0' width='100%25' height='3' fill='%23220f04' opacity='.55'/%3E%3Crect y='160' width='100%25' height='3' fill='%23220f04' opacity='.55'/%3E%3Crect x='410' y='0' width='3' height='160' fill='%23220f04' opacity='.45'/%3E%3Crect x='150' y='160' width='3' height='160' fill='%23220f04' opacity='.45'/%3E%3C/svg%3E"),#9a6a3f;background-size:auto,auto,640px 320px,auto;background-attachment:fixed,fixed,scroll,scroll}
+.desk{padding:34px 18px 70px}
+/* the device */
+.device{position:relative;max-width:1020px;margin:0 auto;padding:26px 28px 32px;border-radius:38px;
+ background:linear-gradient(180deg,color-mix(in srgb,var(--bg),white 16%),var(--bg) 14%,color-mix(in srgb,var(--bg),black 7%));
+ box-shadow:inset 0 2px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.14),0 7px 0 color-mix(in srgb,var(--bg),black 32%),0 40px 50px -12px rgba(0,0,0,.6),0 14px 20px rgba(0,0,0,.35)}
+.top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:22px;align-items:center}
+.knobs{display:grid;grid-template-columns:repeat(2,66px);gap:12px 14px}
+.kw{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+button.knob{width:46px;height:46px;border-radius:50%;padding:0;position:relative;background:radial-gradient(circle at 35% 28%,#5c5c61,#1b1b1d 68%);box-shadow:0 3px 0 #000,0 0 0 4px rgba(0,0,0,.22),inset 0 2px 2px rgba(255,255,255,.28);transform:rotate(var(--rot,0deg));transition:transform .25s}
+button.knob::after{content:'';position:absolute;left:50%;top:5px;width:3px;height:13px;margin-left:-1.5px;border-radius:2px;background:#f4f1ea}
+.lcd{background:#0c0e0d;border-radius:20px;padding:10px;box-shadow:inset 0 0 0 3px #202422,0 2px 0 rgba(255,255,255,.3),0 10px 18px rgba(0,0,0,.3)}
+.scr{position:relative;overflow:hidden;background:#aebfa0;color:#1c2a1b;border-radius:8px;padding:10px 14px 12px;min-height:128px;box-shadow:inset 0 0 18px rgba(0,0,0,.3)}
+.scr::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.04) 0 1px,transparent 1px 3px)}
+.lcdTitle{font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:15px;display:flex;align-items:center;gap:8px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#5d6b57}.dot.on{background:#1d7a38;box-shadow:0 0 6px #2bd35f}
+#dev{margin-top:4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;min-height:1.4em}#dev:empty::before{content:'not connected';opacity:.65}
+#msg{margin-top:6px;font-size:12px;min-height:3em}#msg:empty::before{content:'Plug in your FM-1 over USB-C, press CONNECT, pick a firmware, switch.';opacity:.7}
+#msg.err{background:#1c2a1b;color:#aebfa0;padding:3px 6px;border-radius:3px}
+.prog{height:9px;margin-top:8px;border-radius:2px;background:rgba(0,0,0,.15);overflow:hidden}.prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,#1c2a1b 0 7px,transparent 7px 9px);transition:width .2s}
+#hint{position:absolute;right:12px;top:10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:0;transition:opacity .2s}#hint.on{opacity:.85}
+.btns{display:grid;grid-template-columns:repeat(3,76px);gap:9px;padding:11px;border-radius:16px;background:color-mix(in srgb,var(--bg),black 15%);box-shadow:inset 0 3px 7px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.3)}
+button{font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--card);border:0;border-radius:9px;padding:8px 12px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35)}
+button:hover:not(:disabled){filter:brightness(1.06)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}button:disabled{opacity:.45;cursor:default}
+.btns button{background:var(--acc);color:var(--accink);padding:11px 4px;font-size:10px;line-height:1.2}.btns button.on{outline:2px solid #fff;outline-offset:-4px}
+button.p{background:var(--acc);color:var(--accink)}
+select,#q{font:inherit;font-size:12px;color:var(--ink);background:var(--card);border:0;border-radius:8px;padding:7px 10px;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.strip{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:22px 0 0}.strip #q{flex:1;min-width:180px}.strip label{display:flex;gap:6px;align-items:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+/* the key tray holds the firmware cards */
+.tray{margin-top:16px;padding:20px;border-radius:28px;background:var(--acc);box-shadow:inset 0 7px 16px rgba(0,0,0,.45),0 2px 0 rgba(255,255,255,.35)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
+.card{display:flex;flex-direction:column;overflow:hidden;padding:8px;border-radius:20px;background:var(--card);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.4),0 12px 16px rgba(0,0,0,.3),inset 0 2px 0 var(--hi)}
+.card.cur{outline:3px solid #38d27a;outline-offset:2px}
+.card b{display:block;font-weight:700;letter-spacing:.02em}.card small{opacity:.75;font-size:11.5px}
+.card .pic{position:relative;aspect-ratio:4/3;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;border-radius:13px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)}
 .card .pic img{width:100%;height:100%;object-fit:cover;display:block}
-.card .pic::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,#0000 1px 3px);pointer-events:none}
-.card .t{padding:10px 6px 4px;flex:1}.card .row{display:flex;gap:8px;padding:8px 4px 4px}.card .row .p{flex:1}
-.try{display:inline-flex;align-items:center;padding:6px 10px;border-radius:4px;text-decoration:none;color:var(--ink);background:var(--card);box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 var(--shade)}
-#emu{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;z-index:10}#emu[hidden]{display:none}
-.emuBox{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge);width:min(1000px,100%);height:min(780px,100%);display:flex;flex-direction:column;overflow:hidden}
-.emuBar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}#emuFrame{flex:1;border:0;background:#000}
-dialog{background:var(--card);color:var(--ink);border:0;border-radius:6px;box-shadow:0 0 0 3px var(--edge);padding:8px;width:min(520px,92vw);max-height:80vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.55)}
-.setRow{display:flex;justify-content:space-between;align-items:center;padding:4px 0}#gear,#palBtn{font-size:20px;padding:2px 10px}
-.badge{display:inline-block;font-size:12px;border-radius:3px;padding:0 6px;box-shadow:0 0 0 2px var(--line)}.badge.w{box-shadow:0 0 0 2px var(--warn);color:var(--warn)}
-details{margin:26px 3px 14px;padding:10px 14px}summary{cursor:pointer}
-.drop{box-shadow:none;background:none;border:2px dashed var(--edge);border-radius:6px;padding:16px;text-align:center;margin:12px 0}.drop.over{border-color:var(--acc)}
-.drop button{margin:3px}
-.prog{height:14px;margin:14px 3px 6px;background:var(--card);box-shadow:0 0 0 2px var(--edge);border-radius:3px;overflow:hidden}
-.prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--acc) 0 8px,#0000 8px 10px);transition:width .2s}
-#msg{min-height:1.5em;margin:0 3px}.err{color:var(--warn)}label.adv{display:block;font-size:14px;opacity:.85;margin:10px 3px}
+.card .t{padding:10px 6px 4px;flex:1}.card .row{display:flex;gap:7px;padding:8px 2px 2px;flex-wrap:wrap}.card .row .p{flex:1 1 100%;order:-1}.card .row>*:not(.p){flex:1}.ic{padding:7px 10px}
+.try{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:9px;text-decoration:none;color:var(--ink);background:var(--card);box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35)}
+.star{position:absolute;top:6px;right:6px;font-size:16px;line-height:1;padding:3px 8px}
+.badge{display:inline-block;font-size:10.5px;border-radius:5px;padding:1px 7px;margin-top:4px;background:color-mix(in srgb,var(--card),black 10%);letter-spacing:.04em}.badge.w{background:var(--warn);color:#fff}
+h2{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:26px 0 8px;padding:5px 12px;border-radius:9px;background:var(--card);color:var(--ink)}
+p.sub{margin:0 0 12px;opacity:.85;line-height:1.5}#old p.sub,#old h2{background:var(--card);padding:8px 12px;border-radius:9px;color:var(--ink);opacity:1;display:block}
+#old h2{display:inline-block}
+.plate,#hist:not(:empty){background:var(--card);border-radius:10px;padding:8px 12px;color:var(--ink);margin:0 0 14px}
+#notice{margin:0 0 16px}
+/* rear panel: docs and extras */
+.rear{margin-top:24px;display:grid;gap:12px}
+details{background:color-mix(in srgb,var(--bg),black 12%);border-radius:14px;padding:12px 16px;box-shadow:inset 0 2px 5px rgba(0,0,0,.25)}summary{cursor:pointer;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+details .sub{background:none;padding:0}.tools{margin:8px 0 0;padding-left:18px}.tools li{margin:6px 0}
+.drop{border:2px dashed color-mix(in srgb,var(--ink),transparent 60%);border-radius:12px;padding:14px;text-align:center;margin-top:10px}.drop.over{border-color:var(--acc)}.drop button{margin:3px}
+label.adv{display:block;font-size:12px;opacity:.9}
 a{color:inherit}
-.plate,p.sub,h2,label.adv,#msg:not(:empty),#hist:not(:empty){background:var(--card);border-radius:6px;padding:6px 12px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.25)}
-h1{display:inline-block;background:var(--card);border-radius:6px;padding:4px 14px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.25);text-shadow:none}
-p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
-.star{position:absolute;top:6px;right:6px;font-size:18px;line-height:1;padding:2px 7px}
-.card .row{flex-wrap:wrap}.card .row .p{flex:1 1 100%;order:-1}.card .row>*:not(.p){flex:1}.ic{padding:6px 10px}
-.tools{margin:6px 0 0;padding-left:18px}.tools li{margin:6px 0}
-#filters{gap:16px}#filters input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:6px 10px;box-shadow:0 0 0 2px var(--edge);flex:1;min-width:160px}
-#filters label{font-size:13px}#notice{margin:0 3px 18px}
+/* dialogs and emulator */
+dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.5);padding:8px;width:min(520px,92vw);max-height:80vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.55)}
+.setRow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0}.emuBar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}
+#emu{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;z-index:10}#emu[hidden]{display:none}
+.emuBox{background:var(--card);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.5);width:min(1000px,100%);height:min(780px,100%);display:flex;flex-direction:column;overflow:hidden}#emuFrame{flex:1;border:0;background:#000}
 .sw{width:104px;padding:0;background:none;box-shadow:none;border:0;text-align:center;color:var(--ink)}
-.sw .dev{display:block;height:58px;border-radius:12px;background:var(--b);position:relative;box-shadow:0 0 0 3px var(--edge)}
+.sw .dev{display:block;height:58px;border-radius:12px;background:var(--b);position:relative;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
 .sw .dev::before{content:'';position:absolute;left:34px;top:8px;width:20px;height:16px;border-radius:3px;background:#1d1d1f}
 .sw .dev::after{content:'';position:absolute;left:8px;right:8px;bottom:7px;height:18px;border-radius:6px;background:var(--k)}
-.sw[aria-pressed=true] .dev{box-shadow:0 0 0 3px var(--acc),0 0 0 6px var(--edge)}
+.sw[aria-pressed=true] .dev{box-shadow:0 0 0 3px var(--acc),0 0 0 6px rgba(0,0,0,.5)}
 #palGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:12px}
+@media (max-width:860px){.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(4,1fr)}.btns{grid-template-columns:repeat(3,1fr)}.device{padding:18px 16px 22px;border-radius:28px}.desk{padding:14px 8px 40px}.tray{padding:12px;border-radius:20px}}
 </style>
 </head>
 <body>
-<main>
-<div style="display:flex;justify-content:space-between;align-items:flex-start"><h1>FM-1 Switcher</h1><span><button id="palBtn" title="Colours" aria-label="Choose colours">🎨</button> <button id="gear" title="Settings" aria-label="Settings">⚙</button></span></div>
-<p class="sub">Plug your FM-1 into your Mac over USB-C, pick a firmware, switch. Chrome or Edge only (Web MIDI).</p>
+<main class="desk">
+<div class="device">
+<header class="top">
+  <div class="knobs" aria-label="Controls">
+    <div class="kw"><button class="knob" id="palBtn" title="Colours" aria-label="Choose colours"></button>Colour</div>
+    <div class="kw"><button class="knob" id="kSort" title="Cycle sort order" aria-label="Cycle sort order"></button>Sort</div>
+    <div class="kw"><button class="knob" id="kShow" title="Cycle category filter" aria-label="Cycle category filter"></button>Show</div>
+    <div class="kw"><button class="knob" id="gear" title="Settings" aria-label="Settings"></button>Setup</div>
+  </div>
+  <div class="lcd"><div class="scr">
+    <div class="lcdTitle"><span class="dot" id="dot" title="Not connected"></span>FM-1 Switcher</div>
+    <div id="dev"></div>
+    <div id="msg"></div>
+    <div class="prog"><i id="bar"></i></div>
+    <span id="hint"></span>
+  </div></div>
+  <div class="btns">
+    <button id="connect">Connect</button>
+    <button id="backup" disabled title="Saves your project, samples and voice banks to a file on this computer (official FM1 Open firmware only)">Back up</button>
+    <button id="bFav" title="Show favourites">Favs</button>
+    <button id="bOld" title="Hide firmware that only knows the older flash chip">Hide old chip</button>
+    <button id="bSaves" title="Open My saves">Saves</button>
+    <button id="bRescue" title="Open the backup and rescue tools">Rescue</button>
+  </div>
+</header>
 
-<div class="topbars">
-<div class="bar">
-  <div class="dev"><span class="dot" id="dot" title="Not connected"></span><span id="dev"></span></div>
-  <button id="backup" title="Saves your project, samples and voice banks to a file on this computer (official FM1 Open firmware only)" disabled>Back up</button>
-  <button id="connect" class="p">Connect FM-1</button>
-</div>
-
-<div class="bar" id="tools">
+<div class="strip">
+  <input id="q" type="search" placeholder="Search firmware…" aria-label="Search firmware">
   <label>Sort <select id="sort"><option value="name">A–Z</option><option value="installs">Most installed</option><option value="newest">Newest</option><option value="stars">Most starred</option></select></label>
   <label>Show <select id="kind"><option value="">All</option></select></label>
+  <label><input type="checkbox" id="hideOld"> Hide older-chip</label>
 </div>
-</div>
+
+<section class="tray">
 <div id="notice" class="plate" hidden></div>
-<div class="bar" id="filters" style="margin:0 3px 18px"><input id="q" type="search" placeholder="Search firmware…" aria-label="Search firmware"><label><input type="checkbox" id="hideOld"> Hide older-chip firmware</label></div>
 <div id="list" class="grid"></div>
 <section id="old" hidden>
   <h2>Older flash chip only, or unchecked</h2>
@@ -94,6 +123,9 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
   <div id="listOld" class="grid"></div>
 </section>
 
+</section>
+
+<section class="rear">
 <details><summary>Add more firmware</summary>
 <div class="drop" id="drop">Drop firmware packages here (.json web packages or the stock V15 .fwsc), or <button id="pick">choose files</button>
   <button id="addv15">Add stock V15</button> <button id="addv14">Add FM1 Open V14</button>
@@ -121,11 +153,12 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
 <details id="savesBox"><summary>My saves<span id="saveCount"></span></summary>
 <p class="sub" style="margin:8px 0">Backups of your project, samples and voice banks, kept in this browser and also downloaded as files. Restore works on the same firmware only. Drop an exported save into the box above to add it back.</p>
 <div id="saveList"></div></details>
-<div id="hist" class="sub" style="margin:10px 3px"></div>
+<div id="hist" class="sub"></div>
 <label class="adv"><input type="checkbox" id="force"> Allow switching from firmware this app doesn't recognise (official-format firmware only; community firmware ignores this)</label>
-<div class="prog"><i id="bar"></i></div>
-<div id="msg"></div>
+
 <p class="sub">Back up your projects and samples before switching: formats are not compatible between firmwares. Keep the FM-1 powered during a switch. Power loss mid-write can leave it unbootable.</p>
+</section>
+</div>
 </main>
 <dialog id="palettes"><div class="emuBar"><b>Colours</b><button id="palClose">Close</button></div><div id="palGrid"><button class="sw" data-p="cream" aria-pressed="false" style="--b:#e7e0d4;--k:#3f4247"><span class="dev"></span>Cream</button><button class="sw" data-p="lilac" aria-pressed="false" style="--b:#d98fd0;--k:#9b5fcb"><span class="dev"></span>Lilac</button><button class="sw" data-p="graphite" aria-pressed="false" style="--b:#3b3b3d;--k:#161618"><span class="dev"></span>Graphite</button><button class="sw" data-p="orange" aria-pressed="false" style="--b:#e8501a;--k:#b8381f"><span class="dev"></span>Orange</button><button class="sw" data-p="blue" aria-pressed="false" style="--b:#ece9e1;--k:#3f6290"><span class="dev"></span>Blue</button><button class="sw" data-p="mint" aria-pressed="false" style="--b:#34363a;--k:#5ccfb4"><span class="dev"></span>Mint</button></div></dialog>
 <dialog id="info"><div class="emuBar"><b id="infoTitle"></b><button id="infoClose">Close</button></div><div id="infoBody" style="padding:4px 12px 12px"></div></dialog>
@@ -138,9 +171,9 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
   <div class="emuBox"><div class="emuBar"><b id="emuTitle"></b><span><a id="emuOpen" target="_blank" rel="noopener">Open in new tab</a> <button id="emuClose">Close</button></span></div>
   <iframe id="emuFrame" allow="autoplay; midi" title="FM-1 emulator"></iframe></div>
 </div>
-<script src="webupdate.js?v=13"></script>
-<script src="felucca.js?v=13"></script>
-<script src="samples-core.js?v=13"></script>
-<script src="app.js?v=13"></script>
+<script src="webupdate.js?v=14"></script>
+<script src="felucca.js?v=14"></script>
+<script src="samples-core.js?v=14"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>
