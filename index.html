@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FM-1 Switcher</title>
 <script>try{var t=localStorage.getItem("fm1-palette");if(t)document.documentElement.dataset.palette=t}catch(e){}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap">
 <style>:root,:root[data-palette=cream]{--bg:#e7e0d4;--card:#f6f1e8;--ink:#2b2b2e;--edge:#3a3a3f;--hi:#ffffff;--shade:#d5cdbd;--acc:#3f4247;--accink:#f4efe6;--line:#cfc6b6}
 :root[data-palette=lilac]{--bg:#d98fd0;--card:#f3d5ee;--ink:#3a1f4a;--edge:#5e2f78;--hi:#fbe9f8;--shade:#c27ab9;--acc:#9b5fcb;--accink:#ffffff;--line:#c791c0}
 :root[data-palette=graphite]{--bg:#3b3b3d;--card:#4a4a4d;--ink:#ececec;--edge:#151516;--hi:#6a6a6e;--shade:#2a2a2c;--acc:#161618;--accink:#ffffff;--line:#5a5a5e}
@@ -13,11 +13,11 @@
 :root[data-palette=blue]{--bg:#ece9e1;--card:#fbfaf6;--ink:#1f2b3d;--edge:#2a3f5c;--hi:#ffffff;--shade:#d3cfc4;--acc:#3f6290;--accink:#ffffff;--line:#c9c6bc}
 :root[data-palette=mint]{--bg:#34363a;--card:#45484d;--ink:#e9f6f1;--edge:#131415;--hi:#66696f;--shade:#26282b;--acc:#5ccfb4;--accink:#0d2b25;--line:#55595f}
 *{box-sizing:border-box}
-body{margin:0;color:var(--ink);font:17px/1.45 'Pixelify Sans',ui-monospace,monospace;font-variant-ligatures:none;background-color:var(--bg);
+body{margin:0;color:var(--ink);font:15px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;background-color:var(--bg);
  background:var(--bg);image-rendering:pixelated}
 main{max-width:760px;margin:0 auto;padding:24px 16px 64px}
-h1{font-size:30px;font-weight:600;margin:0 0 4px;letter-spacing:.5px;text-shadow:2px 2px 0 var(--shade)}
-h2{font-size:21px;font-weight:600;margin:34px 3px 4px;text-shadow:2px 2px 0 var(--shade)}
+h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.14em;text-transform:uppercase;text-shadow:2px 2px 0 var(--shade)}
+h2{font-size:16px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:34px 3px 4px;text-shadow:2px 2px 0 var(--shade)}
 p.sub{margin:0 0 18px;opacity:.8}
 /* pixel "window": dark outline, light inner edge, offset drop shade */
 .bar,.card,.drop,details{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 3px rgba(0,0,0,.18)}
@@ -26,14 +26,14 @@ p.sub{margin:0 0 18px;opacity:.8}
 @media (max-width:560px){.topbars{flex-wrap:wrap}.topbars>.bar:first-child{flex:1 1 100%}}.bar .dev{flex:1;min-width:160px}
 .dot{display:inline-block;width:10px;height:10px;background:#8a9a90;margin-right:8px;box-shadow:0 0 0 2px var(--edge)}.dot.on{background:#38d27a}
 select{font:inherit;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:4px 8px;box-shadow:0 0 0 2px var(--edge)}
-button{font:inherit;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:6px 14px;cursor:pointer;box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 var(--shade)}
+button{font:inherit;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:var(--card);border:0;border-radius:4px;padding:6px 14px;cursor:pointer;box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 var(--shade)}
 button:hover:not(:disabled){transform:translateY(-1px)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 2px var(--edge)}
 button.p{background:var(--acc);color:var(--accink);box-shadow:0 0 0 2px var(--edge),inset 0 -3px 0 rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.35)}
 button:disabled{opacity:.45;cursor:default}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px;margin:0 3px}
 .card{display:flex;flex-direction:column;overflow:hidden;padding:6px}
 .card.cur{box-shadow:0 0 0 3px var(--acc),0 0 0 6px var(--edge),inset 0 0 0 2px var(--hi),3px 5px 0 6px rgba(0,0,0,.18)}
-.card b{display:block;font-weight:600}.card small{opacity:.75;font-size:14px}
+.card b{display:block;font-weight:700;letter-spacing:.02em}.card small{opacity:.75;font-size:12px}
 .card .pic{position:relative;aspect-ratio:4/3;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;border-radius:3px;box-shadow:0 0 0 2px var(--edge);overflow:hidden}
 .card .pic img{width:100%;height:100%;object-fit:cover;display:block}
 .card .pic::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,#0000 1px 3px);pointer-events:none}
@@ -114,9 +114,9 @@ p.sub{margin:14px 3px}h2{display:inline-block;margin:34px 3px 8px}
   <div class="emuBox"><div class="emuBar"><b id="emuTitle"></b><span><a id="emuOpen" target="_blank" rel="noopener">Open in new tab</a> <button id="emuClose">Close</button></span></div>
   <iframe id="emuFrame" allow="autoplay; midi" title="FM-1 emulator"></iframe></div>
 </div>
-<script src="webupdate.js?v=6"></script>
-<script src="felucca.js?v=6"></script>
-<script src="samples-core.js?v=6"></script>
-<script src="app.js?v=6"></script>
+<script src="webupdate.js?v=7"></script>
+<script src="felucca.js?v=7"></script>
+<script src="samples-core.js?v=7"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
