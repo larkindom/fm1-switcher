@@ -58,7 +58,7 @@ const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', prof
 // --- community firmwares: catalogue + packages come from thefirmwarehub.com, pinned by its SHA-256 ---
 const HUB = 'https://thefirmwarehub.com/';
 const EMU = 'https://joakimeriksson.github.io/fm1-emu/';
-const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor', 'jiant', 'choralroot', 'mono2k', 'karma', 'fm1dock', 'x0x', 'fomni'];
+const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor', 'jiant', 'choralroot', 'mono2k', 'karma', 'fm1dock', 'x0x', 'fomni', 'perf1', 'maku'];
 // An older release of the same hub firmware (stored with hubId, or before hubId existed: same name prefix and product).
 const sameFw = (m, f) => m.pkg && m.sha256 !== f.sha256 && (m.hubId ? m.hubId === f.id : m.label.startsWith(f.name + ' '));
 async function pruneOlder(f) { for (const m of await all()) if (sameFw(m, f)) await del(m.sha256); }
