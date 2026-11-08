@@ -39,7 +39,7 @@ button:disabled{opacity:.45;cursor:default}
 .emuBox{background:var(--card);border-radius:6px;box-shadow:0 0 0 3px var(--edge);width:min(1000px,100%);height:min(780px,100%);display:flex;flex-direction:column;overflow:hidden}
 .emuBar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}#emuFrame{flex:1;border:0;background:#000}
 dialog{background:var(--card);color:var(--ink);border:0;border-radius:6px;box-shadow:0 0 0 3px var(--edge);padding:8px;width:min(520px,92vw);max-height:80vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.55)}
-.setRow{display:flex;justify-content:space-between;align-items:center;padding:4px 0}#gear{font-size:20px;padding:2px 10px}
+.setRow{display:flex;justify-content:space-between;align-items:center;padding:4px 0}#gear,#themeBtn{font-size:20px;padding:2px 10px}
 .badge{display:inline-block;font-size:12px;border-radius:3px;padding:0 6px;box-shadow:0 0 0 2px var(--line)}.badge.w{box-shadow:0 0 0 2px var(--warn);color:var(--warn)}
 details{margin:26px 3px 14px;padding:10px 14px}summary{cursor:pointer}
 .drop{box-shadow:none;background:none;border:2px dashed var(--edge);border-radius:6px;padding:16px;text-align:center;margin:12px 0}.drop.over{border-color:var(--acc)}
@@ -52,7 +52,7 @@ a{color:inherit}
 </head>
 <body>
 <main>
-<div style="display:flex;justify-content:space-between;align-items:flex-start"><h1>FM-1 Switcher</h1><button id="gear" title="Settings" aria-label="Settings">⚙</button></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><h1>FM-1 Switcher</h1><span><button id="themeBtn" aria-label="Toggle light or dark mode">☾</button> <button id="gear" title="Settings" aria-label="Settings">⚙</button></span></div>
 <p class="sub">Plug your FM-1 into your Mac over USB-C, pick a firmware, switch. Chrome or Edge only (Web MIDI).</p>
 
 <div class="bar">

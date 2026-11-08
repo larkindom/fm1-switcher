@@ -43,6 +43,9 @@ const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', prof
 const HUB = 'https://thefirmwarehub.com/';
 const EMU = 'https://joakimeriksson.github.io/fm1-emu/';
 const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor', 'jiant', 'choralroot', 'mono2k', 'karma'];
+// An older release of the same hub firmware (stored with hubId, or before hubId existed: same name prefix and product).
+const sameFw = (m, f) => m.pkg && m.sha256 !== f.sha256 && (m.hubId ? m.hubId === f.id : m.label.startsWith(f.name + ' '));
+async function pruneOlder(f) { for (const m of await all()) if (sameFw(m, f)) await del(m.sha256); }
 async function addHub(id) {
   const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
   const f = cat.firmwares.find(x => x.id === id);
@@ -50,8 +53,9 @@ async function addHub(id) {
   const r = await fetch(HUB + f.pkg); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
   const pkg = new Uint8Array(await r.arrayBuffer());
   if (Felucca.productOf(pkg) !== f.product || await Felucca.sha256hex(pkg) !== f.sha256) throw new Error('package does not match the hub catalogue');
-  await put({ kind: 'felucca', sha256: f.sha256, label: `${f.name} ${f.version}`, release_version: f.version, product: f.product,
-    bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, installs: f.installs || 0, kind: f.kind || 'other', pkg }); await render();
+  await put({ sha256: f.sha256, label: `${f.name} ${f.version}`, release_version: f.version, product: f.product,
+    bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, installs: f.installs || 0, kind: f.kind || 'other', pkg });
+  await pruneOlder(f); await render();
 }
 async function runFelucca(m) {
   const up = new Felucca.Updater(access, console.log), image = Felucca.logicalImage(m.pkg), total = 2 * Math.ceil(image.length / 512);
@@ -144,8 +148,11 @@ async function render() {
 const pref = (k, v) => { try { if (v !== undefined) localStorage.setItem('fm1-' + k, v); return localStorage.getItem('fm1-' + k) || ''; } catch { return ''; } };
 $('sort').onchange = e => { pref('sort', e.target.value); render(); };
 $('kind').onchange = e => { pref('kind', e.target.value); render(); };
-$('theme').value = pref('theme') || 'auto';
-$('theme').onchange = e => { const v = e.target.value; pref('theme', v === 'auto' ? '' : v); v === 'auto' ? delete document.documentElement.dataset.theme : (document.documentElement.dataset.theme = v); };
+const effTheme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+const setTheme = v => { v === 'auto' ? delete document.documentElement.dataset.theme : (document.documentElement.dataset.theme = v); pref('theme', v === 'auto' ? '' : v); $('theme').value = v; $('themeBtn').textContent = effTheme() === 'dark' ? '☀' : '☾'; $('themeBtn').title = effTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'; };
+$('themeBtn').onclick = () => setTheme(effTheme() === 'dark' ? 'light' : 'dark');
+$('theme').value = pref('theme') || 'auto'; setTheme($('theme').value);
+$('theme').onchange = e => setTheme(e.target.value);
 // Flash history: what this browser switched to, newest first.
 const hist = () => { try { return JSON.parse(localStorage.getItem('fm1-history') || '[]'); } catch { return []; } };
 const showHist = () => { $('hist').textContent = hist().length ? 'Recent switches: ' + hist().slice(0, 5).map(h => `${h.label} (${new Date(h.at).toLocaleDateString()})`).join(' · ') : ''; };
@@ -166,7 +173,7 @@ async function run(meta) {
   if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
-    if (meta.kind === 'felucca') { await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
+    if (meta.pkg) { await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
     const pkg = await FM1Web.prepare(meta);
     updater = new FM1Web.Updater(access, pkg, (t, p) => { msg(String(t)); if (p != null) $('bar').style.width = p + '%'; });
     const r = await updater.connect({ force });
@@ -194,7 +201,7 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
   for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined)) await put({ ...m, hubId: f.id, installs: f.installs || 0, kind: f.kind || 'other' }); }
-  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (f && !have.has(f.sha256)) jobs.push(() => addHub(id)); }
+  for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (!f) continue; if (have.has(f.sha256)) await pruneOlder(f); else jobs.push(() => addHub(id)); }
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
   if (jobs.length && !$('msg').className) msg('');
