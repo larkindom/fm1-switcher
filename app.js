@@ -8,17 +8,25 @@ let access, updater, identity = null, busy = false;
 
 // --- library (IndexedDB: key = sha256, value = web-package meta incl. base64 data) ---
 const db = new Promise((ok, no) => {
-  const r = indexedDB.open('fm1-switcher', 1);
-  r.onupgradeneeded = () => r.result.createObjectStore('fw', { keyPath: 'sha256' });
+  const r = indexedDB.open('fm1-switcher', 2);
+  r.onupgradeneeded = () => {
+    if (!r.result.objectStoreNames.contains('fw')) r.result.createObjectStore('fw', { keyPath: 'sha256' });
+    if (!r.result.objectStoreNames.contains('saves')) r.result.createObjectStore('saves', { keyPath: 'id' });
+  };
   r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
 });
-const tx = async (mode, fn) => { const d = await db; return new Promise((ok, no) => {
-  const q = fn(d.transaction('fw', mode).objectStore('fw')); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); };
+const tx = async (mode, fn, store = 'fw') => { const d = await db; return new Promise((ok, no) => {
+  const q = fn(d.transaction(store, mode).objectStore(store)); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); };
 const all = () => tx('readonly', s => s.getAll());
 const put = m => tx('readwrite', s => s.put(m));
 const removed = () => { try { return new Set(JSON.parse(localStorage.getItem('fm1-removed') || '[]')); } catch { return new Set(); } };
 const setRemoved = s => { try { localStorage.setItem('fm1-removed', JSON.stringify([...s])); } catch {} };
 const del = k => tx('readwrite', s => s.delete(k));
+// Saves (backups of your project, samples and voice banks) live in their own store; library resets never touch them.
+const allSaves = () => tx('readonly', s => s.getAll(), 'saves');
+const putSave = v => tx('readwrite', s => s.put(v), 'saves');
+const delSave = k => tx('readwrite', s => s.delete(k), 'saves');
+const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
 const msg = (t, err) => { $('msg').textContent = t; $('msg').className = err ? 'err' : ''; };
 const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode(...u8.subarray(i, i + 8192)); return btoa(s); };
@@ -32,7 +40,12 @@ async function add(meta) {
 }
 async function importFile(f) {
   const u8 = new Uint8Array(await f.arrayBuffer());
-  if (f.name.endsWith('.json')) { let m = JSON.parse(new TextDecoder().decode(u8)); return add(m.stock ? (await add(m.stock), (delete m.stock, m)) : m); }
+  if (f.name.endsWith('.json')) { let m = JSON.parse(new TextDecoder().decode(u8));
+    if (m.format === 'fm1-switcher-backup') {
+      if (typeof m.firmware !== 'string' || typeof m.project !== 'string' || typeof m.samples !== 'string') throw new Error('not a valid save file');
+      await putSave({ ...m, id: m.id || crypto.randomUUID(), label: m.label || `${m.firmware} · ${m.created}` }); return renderSaves();
+    }
+    return add(m.stock ? (await add(m.stock), (delete m.stock, m)) : m); }
   if (await sha(u8) !== STOCK_SHA) throw new Error('Raw .fwsc files are only accepted for stock V15; use the .json web package for other firmware.');
   return addStock(u8);
 }
@@ -78,15 +91,54 @@ async function backup() {
     msg('Reading project…'); out.project = b64(await lib.download(0));
     msg('Reading samples…'); out.samples = b64(await lib.samplesRead(p => $('bar').style.width = (p * 100 || 0) + '%'));
     out.banks = []; if (lib.programs === 128) for (let i = 0; i < 4; i++) { msg(`Reading voice bank ${i + 1}…`); out.banks.push(b64(await lib.readBank(i))); }
+    const fw = (await all()).find(m => m.product === identity);
+    out.id = crypto.randomUUID(); out.programs = lib.programs; out.label = `${fw ? fw.label : identity} · ${new Date(out.created).toLocaleString()}`;
+    await putSave(out); await renderSaves();
     const url = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' }));
     Object.assign(document.createElement('a'), { href: url, download: `fm1-backup-${out.created.slice(0, 10)}.json` }).click();
     URL.revokeObjectURL(url); localStorage.setItem('fm1-lastBackup', out.created);
-    msg('Backup saved to your Downloads folder.');
+    msg('Saved in My saves, and a copy downloaded to your Downloads folder.');
   } catch (e) {
     msg('Backup failed: ' + e.message + '. Backups only work under the official FM1 Open firmware; for other firmwares use their own editor.', true);
   } finally { try { await lib.disconnect(); } catch {} busy = false; $('backup').disabled = !identity; }
 }
 $('backup').onclick = backup;
+
+// Restore a save onto the FM-1. Same firmware only: formats differ between firmwares. Each write is read back and checked.
+async function restore(s) {
+  if (busy) return;
+  if (!identity) return msg('Connect the FM-1 first.', true);
+  if (identity !== s.firmware) return msg(`This save is from ${s.firmware} but the FM-1 is running ${identity}. Switch to that firmware first: saves don't carry across firmwares.`, true);
+  if (!confirm(`Restore "${s.label}"?\n\nThis replaces the FM-1's current project, samples and voice banks. Keep the FM-1 plugged in and powered until it finishes.`)) return;
+  busy = true; render(); $('emu').hidden = true; const lib = new FM1Web.Library(access);
+  try {
+    await lib.connect();
+    msg('Writing project…'); const proj = ub64(s.project); await lib.upload(0, 0, proj);
+    const want = lib.projectPayload(proj), got = await lib.download(0);
+    if (got.length !== want.length || got.some((v, i) => v !== want[i])) throw new Error('the project read back differently; nothing more was written');
+    msg('Writing samples…'); await lib.samplesWrite(ub64(s.samples), p => $('bar').style.width = (p * 100 || 0) + '%');
+    if (s.banks && s.banks.length && lib.programs === 128) for (let i = 0; i < s.banks.length; i++) { msg(`Writing voice bank ${i + 1}…`); await lib.writeBank(i, ub64(s.banks[i])); }
+    msg('Restored. Reload the project on the FM-1 if it looks unchanged.');
+  } catch (e) { msg('Restore failed: ' + e.message + '. Run Restore again to finish.', true); }
+  finally { try { await lib.disconnect(); } catch {} busy = false; render(); }
+}
+async function renderSaves() {
+  const box = $('saveList'), items = (await allSaves()).sort((x, y) => (y.created || '').localeCompare(x.created || ''));
+  box.replaceChildren(); $('saveCount').textContent = items.length ? ` (${items.length})` : '';
+  for (const s of items) {
+    const row = document.createElement('div'); row.className = 'setRow';
+    row.append(Object.assign(document.createElement('span'), { textContent: s.label }));
+    const btns = document.createElement('span');
+    btns.append(
+      Object.assign(document.createElement('button'), { textContent: 'Restore', className: 'p', onclick: () => restore(s) }),
+      Object.assign(document.createElement('button'), { textContent: 'Export', onclick: () => {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(s)], { type: 'application/json' }));
+        Object.assign(document.createElement('a'), { href: url, download: `fm1-save-${(s.created || '').slice(0, 10)}.json` }).click(); URL.revokeObjectURL(url); } }),
+      Object.assign(document.createElement('button'), { textContent: 'Delete', onclick: async () => { if (confirm(`Delete the save "${s.label}"? This cannot be undone.`)) { await delSave(s.id); renderSaves(); } } }));
+    row.append(btns); box.append(row);
+  }
+  if (!items.length) box.textContent = 'No saves yet. Connect an FM-1 running FM1 Open and press Back up.';
+}
 
 // --- settings: delete firmware, reset ---
 async function openSettings() {
@@ -150,16 +202,17 @@ async function render() {
 const pref = (k, v) => { try { if (v !== undefined) localStorage.setItem('fm1-' + k, v); return localStorage.getItem('fm1-' + k) || ''; } catch { return ''; } };
 $('sort').onchange = e => { pref('sort', e.target.value); render(); };
 $('kind').onchange = e => { pref('kind', e.target.value); render(); };
-const effTheme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
-const setTheme = v => { v === 'auto' ? delete document.documentElement.dataset.theme : (document.documentElement.dataset.theme = v); pref('theme', v === 'auto' ? '' : v); $('theme').value = v; $('themeBtn').textContent = effTheme() === 'dark' ? '☀' : '☾'; $('themeBtn').title = effTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'; };
-$('themeBtn').onclick = () => setTheme(effTheme() === 'dark' ? 'light' : 'dark');
-$('theme').value = pref('theme') || 'auto'; setTheme($('theme').value);
-$('theme').onchange = e => setTheme(e.target.value);
+const PALETTES = ['cream', 'lilac', 'graphite', 'orange', 'blue', 'mint'];
+const setPalette = p => { document.documentElement.dataset.palette = p; pref('palette', p); document.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === p)); };
+document.querySelectorAll('.sw').forEach(b => b.onclick = () => setPalette(b.dataset.p));
+$('palBtn').onclick = () => $('palettes').showModal();
+$('palClose').onclick = () => $('palettes').close();
+setPalette(PALETTES.includes(pref('palette')) ? pref('palette') : 'cream');
 // Flash history: what this browser switched to, newest first.
 const hist = () => { try { return JSON.parse(localStorage.getItem('fm1-history') || '[]'); } catch { return []; } };
 const showHist = () => { $('hist').textContent = hist().length ? 'Recent switches: ' + hist().slice(0, 5).map(h => `${h.label} (${new Date(h.at).toLocaleDateString()})`).join(' · ') : ''; };
 const logHist = m => { try { localStorage.setItem('fm1-history', JSON.stringify([{ label: m.label, product: m.product, at: Date.now() }, ...hist()].slice(0, 20))); } catch {} showHist(); };
-showHist();
+showHist(); renderSaves();
 // Emulator panel: fm1-emu embedded, so you can audition a firmware (with your MIDI keyboard) before flashing.
 function openEmu(m) {
   const url = EMU + '?fw=' + encodeURIComponent(m.hubId);

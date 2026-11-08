@@ -14,8 +14,11 @@ Connect the FM-1, click **Connect FM-1**, add firmware to the library (stock V15
 ## Emulator
 Cards from the hub have a ▶ that opens that firmware in an embedded panel (or a new tab) of [fm1-emu](https://github.com/joakimeriksson/fm1-emu) (MIT, by joakimeriksson), a browser emulator that also ships AU/VST3 plugins. It runs the firmware but not your real flash chip, so it can't test the old-chip problem.
 
-## Backups
-**Back up** saves your current project, samples and voice banks to one `fm1-backup-DATE.json` in your Downloads, through M-VAVE's project protocol. It works only while the FM-1 runs the official **FM1 Open** firmware. It is not a whole-flash image and there is no restore button yet, so it does not cover a firmware that can't save or update on your flash chip. For whole-flash backup use a download-mode tool such as FM-SWITCH on a Mac; for a firmware that won't update, use the hub's rescue page.
+## Saves (backup and restore, FM1 Open only)
+**Back up** reads the FM-1's current project, samples and voice banks through M-VAVE's project protocol and keeps them under **My saves** (this browser) and as a `fm1-backup-DATE.json` download. **Restore** writes a save back and reads each part back to check it; it only works when the FM-1 runs the same firmware the save came from, because formats differ between firmwares. It works only under the official **FM1 Open** firmware, covers the current project (not the 16 project slots), and is not a whole-flash image, so it does not cover a firmware that can't save or update on your flash chip. Library resets never touch saves. Use a download-mode tool such as FM-SWITCH on a Mac for whole-flash backups, and the hub's rescue page for a firmware that won't update.
+
+## Colours
+The palette button picks one of six colourways from the device: Cream, Lilac, Graphite, Orange, Blue, Mint.
 
 ## Status: untested on hardware
 - `node test.mjs FM-1_015.fwsc` checks the official parser accepts the real stock package. Nothing has been flashed by this app yet.
