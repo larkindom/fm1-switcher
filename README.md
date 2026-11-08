@@ -24,6 +24,9 @@ Cards from the hub have a ▶ that opens that firmware in an embedded panel (or 
 - A banner explains update mode and the hold-OCT- rescue start when no FM-1 is found or it is stuck in its update loader.
 - **Back to official V15** from a community firmware goes through the community updater, as the hub does. Not tested on hardware.
 
+## Firmware not on the hub
+`EXTRAS` in `app.js` lists firmwares kept in this repo and pinned by SHA-256 (currently Garden FM, GPL-3.0, from its GitHub release; see `firmware/GARDEN.md`). They are marked "chip support unknown" because nobody has checked them.
+
 ## Colours
 The palette button picks one of six colourways from the device: Cream, Lilac, Graphite, Orange, Blue, Mint.
 

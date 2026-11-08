@@ -76,6 +76,16 @@ async function addHub(id, cat) {
     bytes: pkg.length, lic: f.lic, chip: f.chip, hubId: id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other', pkg });
   await pruneOlder(f); await render();
 }
+// Firmwares not on the hub: packages kept in this repo, pinned by SHA-256 (GitHub release downloads can't be fetched by a web page).
+const EXTRAS = [{ file: 'firmware/garden-main-5e185e6.fwsc', sha256: '2e8e1cb2f9e293dba3b1372bf9b08a9cf401a60acc66a6157c34f94046e9554c', name: 'Garden', version: 'main-5e185e6', product: 'FM-1_900',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'groove', info: { what: 'Garden FM: custom firmware based on JIANT. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'nvhhh', play: 'https://nvhhh.github.io/Garden-FM/emu/',
+  source: 'https://github.com/nvhhh/Garden-FM', release: 'https://github.com/nvhhh/Garden-FM/releases/tag/main-5e185e6', site: 'https://nvhhh.github.io/Garden-FM/flasher/' } }];
+async function addExtra(x) {
+  const r = await fetch(x.file); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
+  const pkg = new Uint8Array(await r.arrayBuffer());
+  if (Felucca.productOf(pkg) !== x.product || await Felucca.sha256hex(pkg) !== x.sha256) throw new Error(x.name + ': package does not match its pinned hash');
+  await put({ sha256: x.sha256, label: `${x.name} ${x.version}`, product: x.product, bytes: pkg.length, lic: x.lic, chip: x.chip, kind: x.kind, installs: 0, info: x.info, pkg }); await render();
+}
 async function runFelucca(m) {
   const bytes = m.pkg || ub64(m.data), stock = m.kind === 'stock';   // stock V15 comes back through the community updater, as the hub does
   if (stock && Felucca.productOf(bytes) !== m.product) throw new Error('not the official V15 package');
@@ -199,7 +209,7 @@ async function render() {
     newest: (a, b) => ((b.info && b.info.date) || '').localeCompare((a.info && a.info.date) || ''), name: (a, b) => a.label.localeCompare(b.label) };
   const by = S[$('sort').value] || S.name, q = $('q').value.trim().toLowerCase(), favs = getFavs(), hideOld = $('hideOld').checked;
   const hay = m => [m.label, m.kind, m.info && m.info.what, m.info && m.info.author].join(' ').toLowerCase();
-  for (const m of items.filter(m => (!sel.value || (sel.value === '__fav' ? favs.has(favKey(m)) : m.kind === sel.value)) && (!q || hay(m).includes(q)) && !(hideOld && m.chip === 'old')).sort(by)) {
+  for (const m of items.filter(m => (!sel.value || (sel.value === '__fav' ? favs.has(favKey(m)) : m.kind === sel.value)) && (!q || hay(m).includes(q)) && !(hideOld && (m.chip === 'old' || m.chip === 'unknown'))).sort(by)) {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
     const src = m.hubId ? HUB + (m.card ? m.card.replace(/^\//, '') : `img/w0/${m.hubId}.webp`) : 'assets/fm1.svg';
     const pic = src ? `<img alt="" src="${esc(src)}">` : esc(m.label.slice(0, 2));
@@ -208,18 +218,20 @@ async function render() {
     const img = el.querySelector('.pic img'); if (img) img.onerror = () => { img.onerror = null; img.src = 'assets/fm1.svg'; };
     el.querySelector('small').textContent = `${m.product} · ${(m.bytes / 1024) | 0} KB` + (m.lic ? ' · ' + m.lic : '') + (identity === m.product ? ' · installed' : '');
     if (m.chip === 'old') el.querySelector('.t').insertAdjacentHTML('beforeend', '<br><span class="badge w" title="Only knows the first FM-1s\' Puya flash chip">old flash chip only</span>');
+    else if (m.chip === 'unknown') el.querySelector('.t').insertAdjacentHTML('beforeend', '<br><span class="badge w" title="Not on the Firmware Hub: flash-chip support has not been checked">chip support unknown</span>');
     const sw = Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
     sw.onclick = () => run(m);
     const row = el.querySelector('.row');
     const star = Object.assign(document.createElement('button'), { textContent: getFavs().has(favKey(m)) ? '★' : '☆', className: 'star', title: 'Favourite', onclick: () => { toggleFav(m); render(); } });
     el.querySelector('.pic').append(star);
     if (m.updatedAt && Date.now() - m.updatedAt < 14 * 864e5) el.querySelector('.t').insertAdjacentHTML('beforeend', `<br><span class="badge">updated from ${esc(String(m.updatedFrom || 'older'))}</span>`);
+    if (!m.hubId && m.info && /^https:\/\//.test(m.info.play || '')) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in its browser emulator', href: m.info.play, target: '_blank', rel: 'noopener', className: 'try' }));
     if (m.hubId) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in the browser emulator (fm1-emu), no FM-1 needed', href: EMU + '?fw=' + encodeURIComponent(m.hubId), target: '_blank', rel: 'noopener', className: 'try', onclick: e => { e.preventDefault(); openEmu(m); } }));
     if (m.info && /^https:\/\//.test(m.info.editor || '')) row.append(Object.assign(document.createElement('a'), { textContent: '✎', title: 'Open its editor / backup tool', href: m.info.editor, target: '_blank', rel: 'noopener', className: 'try' }));
     row.append(Object.assign(document.createElement('button'), { textContent: 'ⓘ', title: 'Details', className: 'ic', onclick: () => showInfo(m) }));
-    row.append(sw); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
+    row.append(sw); $(m.chip === 'old' || m.chip === 'unknown' ? 'listOld' : 'list').append(el);
   }
-  $('old').hidden = !items.some(m => m.chip === 'old');
+  $('old').hidden = !items.some(m => m.chip === 'old' || m.chip === 'unknown');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
 }
 const favKey = m => m.hubId || m.sha256;
@@ -231,7 +243,7 @@ function showInfo(m) {
   $('infoTitle').textContent = m.label;
   if (i.what) box.append(Object.assign(document.createElement('p'), { textContent: i.what, className: 'sub', style: 'margin:6px 0' }));
   row('Author', i.author); row('Licence', m.lic); row('Released', i.date); row('Identity', m.product); row('Hub installs', m.installs ? String(m.installs) : ''); row('GitHub stars', i.stars ? String(i.stars) : '');
-  row('Flash chip', { old: 'Older chip only: saving may fail on newer FM-1s', new: 'Both FM-1 flash chips', any: 'Either chip' }[m.chip]);
+  row('Flash chip', { old: 'Older chip only: saving may fail on newer FM-1s', new: 'Both FM-1 flash chips', any: 'Either chip', unknown: 'Unknown: not checked by the hub' }[m.chip]);
   row('Built from source', i.built ? 'Yes, GitHub signed this exact file' + (i.commit ? ` (commit ${i.commit.slice(0, 7)})` : '') : m.pkg ? 'Not verified by the hub' : '');
   const links = document.createElement('div'); links.className = 'setRow';
   for (const [t, u] of [['Release notes', i.release], ['Source', i.source], ['Project site', i.site], ['Editor', i.editor]]) if (/^https:\/\//.test(u || '')) links.append(Object.assign(document.createElement('a'), { textContent: t, href: u, target: '_blank', rel: 'noopener' }));
@@ -266,7 +278,7 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 
 async function run(meta) {
   const force = $('force').checked;
-  const oldChip = meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
+  const oldChip = meta.chip === 'unknown' ? '\n\nWARNING: this firmware is not listed on The Firmware Hub, so nobody has vetted it, and its flash-chip support is unknown. On a newer FM-1 saving may fail.' : meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
   if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
@@ -300,6 +312,7 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
   for (const m of await all()) { const f = cat.firmwares.find(x => HUB_IDS.includes(x.id) && x.sha256 === m.sha256); if (f && (!m.hubId || m.installs === undefined || m.card === undefined || m.info === undefined)) await put({ ...m, info: infoOf(f), hubId: f.id, card: f.card || null, installs: f.installs || 0, kind: f.kind || 'other' }); }
   for (const id of HUB_IDS) { const f = cat.firmwares.find(x => x.id === id); if (!f) continue; if (have.has(f.sha256)) await pruneOlder(f); else jobs.push(() => addHub(id, cat)); }
+  for (const x of EXTRAS) if (!have.has(x.sha256)) jobs.push(() => addExtra(x));
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
   if (jobs.length && !$('msg').className) msg('');
