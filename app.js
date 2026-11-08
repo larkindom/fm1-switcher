@@ -39,6 +39,7 @@ const addStock = u8 => add({ schema: 1, kind: 'stock', product: 'FM-1_015', prof
 
 // --- community firmwares: catalogue + packages come from thefirmwarehub.com, pinned by its SHA-256 ---
 const HUB = 'https://thefirmwarehub.com/';
+const EMU = 'https://joakimeriksson.github.io/fm1-emu/';
 const HUB_IDS = ['sloop', 'melodee', 'amb', 'coralflower', 'zen', 'chord', 'fmel', 'frodhes', 'clipper', 'fm106', 'sloopdx', 'tonitor', 'jiant', 'choralroot', 'mono2k', 'karma'];
 async function addHub(id) {
   const cat = await (await fetch(HUB + 'catalog.json', { cache: 'no-store' })).json();
@@ -114,7 +115,9 @@ async function render() {
     sw.onclick = () => run(m);
     const rm = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove from library', disabled: busy });
     rm.onclick = async () => { await del(m.sha256); render(); };
-    el.querySelector('.row').append(sw, rm); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
+    const row = el.querySelector('.row');
+    if (m.hubId) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in the browser emulator (fm1-emu), no FM-1 needed', href: EMU + '?fw=' + encodeURIComponent(m.hubId), target: '_blank', rel: 'noopener', className: 'try' }));
+    row.append(sw, rm); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
   }
   $('old').hidden = !items.some(m => m.chip === 'old');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';

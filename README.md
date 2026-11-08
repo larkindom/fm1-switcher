@@ -11,6 +11,9 @@ python3 -m http.server 8000   # then open http://localhost:8000 in Chrome
 ```
 Connect the FM-1, click **Connect FM-1**, add firmware to the library (stock V15 downloads from GitHub; other firmware as the `.json` web package the official workbench uses), click **Switch**.
 
+## Emulator
+Cards from the hub have a ▶ that opens that firmware in [fm1-emu](https://github.com/joakimeriksson/fm1-emu) (MIT, by joakimeriksson), a browser emulator that also ships AU/VST3 plugins. It runs the firmware but not your real flash chip, so it can't test the old-chip problem.
+
 ## Backups
 **Back up** saves your current project, samples and voice banks to one `fm1-backup-DATE.json` in your Downloads, through M-VAVE's project protocol. It works only while the FM-1 runs the official **FM1 Open** firmware. It is not a whole-flash image and there is no restore button yet, so it does not cover a firmware that can't save or update on your flash chip. For whole-flash backup use a download-mode tool such as FM-SWITCH on a Mac; for a firmware that won't update, use the hub's rescue page.
 
