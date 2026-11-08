@@ -113,11 +113,9 @@ async function render() {
     if (m.chip === 'old') el.querySelector('.t').insertAdjacentHTML('beforeend', '<br><span class="badge w" title="Only knows the first FM-1s\' Puya flash chip">old flash chip only</span>');
     const sw = Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
     sw.onclick = () => run(m);
-    const rm = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove from library', disabled: busy });
-    rm.onclick = async () => { await del(m.sha256); render(); };
     const row = el.querySelector('.row');
     if (m.hubId) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in the browser emulator (fm1-emu), no FM-1 needed', href: EMU + '?fw=' + encodeURIComponent(m.hubId), target: '_blank', rel: 'noopener', className: 'try', onclick: e => { e.preventDefault(); openEmu(m); } }));
-    row.append(sw, rm); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
+    row.append(sw); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
   }
   $('old').hidden = !items.some(m => m.chip === 'old');
   if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
