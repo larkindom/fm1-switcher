@@ -13,7 +13,10 @@ const db = new Promise((ok, no) => {
     if (!r.result.objectStoreNames.contains('fw')) r.result.createObjectStore('fw', { keyPath: 'sha256' });
     if (!r.result.objectStoreNames.contains('saves')) r.result.createObjectStore('saves', { keyPath: 'id' });
   };
-  r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+  // An older tab holding the previous version open would block the upgrade forever: say so, and let newer tabs step aside.
+  r.onblocked = () => msg('Close your other FM-1 Switcher tabs, then reload this page.', true);
+  r.onsuccess = () => { r.result.onversionchange = () => r.result.close(); ok(r.result); };
+  r.onerror = () => no(r.error);
 });
 const tx = async (mode, fn, store = 'fw') => { const d = await db; return new Promise((ok, no) => {
   const q = fn(d.transaction(store, mode).objectStore(store)); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); };
@@ -251,7 +254,7 @@ dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); }; dz.ondra
 dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (const f of e.dataTransfer.files) await importFile(f).catch(x => msg(f.name + ': ' + x.message, true)); };
 // First run: fill the library with the featured firmwares so the page is a plain picker.
 (async () => {
-  await render(); const have = new Set([...(await all()).map(m => m.sha256), ...removed()]), jobs = [];
+  await render(); renderSaves(); const have = new Set([...(await all()).map(m => m.sha256), ...removed()]), jobs = [];
   if (!have.has('7e7b6d260163cdf9d716f7fab44f19be600edeffcd390de74370b83c917fd0c6')) jobs.push(() => fetch('firmware/fm1-open-v14.json').then(r => r.json()).then(add));
   if (!have.has(STOCK_SHA)) jobs.push(() => fetch(STOCK_URL).then(r => r.arrayBuffer()).then(b => addStock(new Uint8Array(b))));
   const cat = await fetch(HUB + 'catalog.json').then(r => r.json()).catch(() => ({ firmwares: [] }));
@@ -260,4 +263,4 @@ dz.ondrop = async e => { e.preventDefault(); dz.classList.remove('over'); for (c
   if (jobs.length) msg('Loading firmwares…');
   for (const j of jobs) await j().catch(e => msg(e.message, true));
   if (jobs.length && !$('msg').className) msg('');
-})();
+})().catch(e => msg('Could not load the firmware library: ' + e.message, true));
