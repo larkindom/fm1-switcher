@@ -116,7 +116,7 @@ async function render() {
     const rm = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove from library', disabled: busy });
     rm.onclick = async () => { await del(m.sha256); render(); };
     const row = el.querySelector('.row');
-    if (m.hubId) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in the browser emulator (fm1-emu), no FM-1 needed', href: EMU + '?fw=' + encodeURIComponent(m.hubId), target: '_blank', rel: 'noopener', className: 'try' }));
+    if (m.hubId) row.append(Object.assign(document.createElement('a'), { textContent: '▶', title: 'Try it in the browser emulator (fm1-emu), no FM-1 needed', href: EMU + '?fw=' + encodeURIComponent(m.hubId), target: '_blank', rel: 'noopener', className: 'try', onclick: e => { e.preventDefault(); openEmu(m); } }));
     row.append(sw, rm); $(m.chip === 'old' ? 'listOld' : 'list').append(el);
   }
   $('old').hidden = !items.some(m => m.chip === 'old');
@@ -130,6 +130,13 @@ const hist = () => { try { return JSON.parse(localStorage.getItem('fm1-history')
 const showHist = () => { $('hist').textContent = hist().length ? 'Recent switches: ' + hist().slice(0, 5).map(h => `${h.label} (${new Date(h.at).toLocaleDateString()})`).join(' · ') : ''; };
 const logHist = m => { try { localStorage.setItem('fm1-history', JSON.stringify([{ label: m.label, product: m.product, at: Date.now() }, ...hist()].slice(0, 20))); } catch {} showHist(); };
 showHist();
+// Emulator panel: fm1-emu embedded, so you can audition a firmware (with your MIDI keyboard) before flashing.
+function openEmu(m) {
+  const url = EMU + '?fw=' + encodeURIComponent(m.hubId);
+  $('emuTitle').textContent = m.label + ' (emulator)'; $('emuOpen').href = url;
+  $('emuFrame').src = url; $('emu').hidden = false;
+}
+$('emuClose').onclick = () => { $('emu').hidden = true; $('emuFrame').src = 'about:blank'; };
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 async function run(meta) {
