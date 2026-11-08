@@ -13,13 +13,19 @@
 :root[data-palette=blue]{--bg:#ece9e1;--card:#fbfaf6;--ink:#1f2b3d;--edge:#2a3f5c;--hi:#ffffff;--shade:#d3cfc4;--acc:#3f6290;--accink:#ffffff;--line:#c9c6bc}
 :root[data-palette=mint]{--bg:#34363a;--card:#45484d;--ink:#e9f6f1;--edge:#131415;--hi:#66696f;--shade:#26282b;--acc:#5ccfb4;--accink:#0d2b25;--line:#55595f}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;
- background:radial-gradient(ellipse 90% 55% at 50% -5%,rgba(255,236,200,.38),transparent 70%),radial-gradient(ellipse 120% 80% at 50% 120%,rgba(0,0,0,.45),transparent 60%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.003 0.075' numOctaves='4' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.20 0 0 0 0 0.10 0 0 0 0 0.04 0 0 0 1.1 -0.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3Crect width='100%25' height='160' fill='%23ffd9a0' opacity='.06'/%3E%3Crect y='160' width='100%25' height='160' fill='%23000' opacity='.07'/%3E%3Crect y='0' width='100%25' height='3' fill='%23220f04' opacity='.55'/%3E%3Crect y='160' width='100%25' height='3' fill='%23220f04' opacity='.55'/%3E%3Crect x='410' y='0' width='3' height='160' fill='%23220f04' opacity='.45'/%3E%3Crect x='150' y='160' width='3' height='160' fill='%23220f04' opacity='.45'/%3E%3C/svg%3E"),#9a6a3f;background-size:auto,auto,640px 320px,auto;background-attachment:fixed,fixed,scroll,scroll}
+body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;background-color:#8a5a2f;
+ background-image:radial-gradient(ellipse 85% 50% at 50% -8%,rgba(255,238,205,.45),transparent 68%),radial-gradient(ellipse 130% 90% at 50% 125%,rgba(10,4,0,.6),transparent 62%),radial-gradient(ellipse 60% 100% at 0% 50%,rgba(10,4,0,.32),transparent 70%),radial-gradient(ellipse 60% 100% at 100% 50%,rgba(10,4,0,.32),transparent 70%),url(assets/desk.svg);background-size:auto,auto,auto,auto,1600px 1200px;background-position:0 0,0 0,0 0,0 0,center top;background-attachment:fixed,fixed,fixed,fixed,scroll}
 .desk{padding:34px 18px 70px}
 /* the device */
-.device{position:relative;max-width:1020px;margin:0 auto;padding:26px 28px 32px;border-radius:38px;
- background:linear-gradient(180deg,color-mix(in srgb,var(--bg),white 16%),var(--bg) 14%,color-mix(in srgb,var(--bg),black 7%));
- box-shadow:inset 0 2px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.14),0 7px 0 color-mix(in srgb,var(--bg),black 32%),0 40px 50px -12px rgba(0,0,0,.6),0 14px 20px rgba(0,0,0,.35)}
+.rig{position:relative;z-index:1;max-width:1020px;margin:0 auto}
+.device{position:relative;z-index:1;padding:26px 28px 32px;border-radius:38px;
+ background:linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,0) 40%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(180deg,color-mix(in srgb,var(--bg),white 14%),var(--bg) 14%,color-mix(in srgb,var(--bg),black 6%));
+ box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(0,0,0,.16),inset 2px 0 0 rgba(255,255,255,.14),inset -2px 0 0 rgba(0,0,0,.14)}
+/* thickness and weight: a darker slab under the body, contact shadow, then soft ambient shadow falling away from the window light */
+.rig::before{content:'';position:absolute;z-index:0;left:0;right:0;top:14px;bottom:-14px;border-radius:38px;background:color-mix(in srgb,var(--bg),black 46%);
+ box-shadow:0 5px 3px rgba(0,0,0,.7),0 16px 14px -2px rgba(0,0,0,.55),0 34px 40px -6px rgba(0,0,0,.5),0 70px 90px -24px rgba(0,0,0,.55),8px 24px 34px -10px rgba(0,0,0,.35)}
+.cable{position:absolute;z-index:0;top:-4px;left:calc(50% + 230px);width:300px;height:140px;overflow:visible;pointer-events:none;filter:drop-shadow(6px 10px 5px rgba(0,0,0,.55))}
+.desk{position:relative}
 .top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:22px;align-items:center}
 .knobs{display:grid;grid-template-columns:repeat(2,66px);gap:12px 14px}
 .kw{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
@@ -77,12 +83,13 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 .sw .dev::after{content:'';position:absolute;left:8px;right:8px;bottom:7px;height:18px;border-radius:6px;background:var(--k)}
 .sw[aria-pressed=true] .dev{box-shadow:0 0 0 3px var(--acc),0 0 0 6px rgba(0,0,0,.5)}
 #palGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:12px}
-@media (max-width:860px){.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(4,1fr)}.btns{grid-template-columns:repeat(3,1fr)}.device{padding:18px 16px 22px;border-radius:28px}.desk{padding:14px 8px 40px}.tray{padding:12px;border-radius:20px}}
+@media (max-width:860px){.cable{display:none}.rig::before{top:8px;bottom:-8px;border-radius:28px}.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(4,1fr)}.btns{grid-template-columns:repeat(3,1fr)}.device{padding:18px 16px 22px;border-radius:28px}.desk{padding:14px 8px 40px}.tray{padding:12px;border-radius:20px}}
 </style>
 </head>
 <body>
 <main class="desk">
-<div class="device">
+<svg class="cable" viewBox="0 0 300 140" aria-hidden="true"><path d="M30 140 L30 84 C30 46 70 36 112 32 S196 22 238 -6 S300 -50 330 -90" fill="none" stroke="#0e0e0f" stroke-width="9" stroke-linecap="round"/><path d="M28 140 L28 84 C28 44 68 34 110 30 S194 20 236 -8 S298 -52 328 -92" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2" stroke-linecap="round"/></svg>
+<div class="rig"><div class="device">
 <header class="top">
   <div class="knobs" aria-label="Controls">
     <div class="kw"><button class="knob" id="palBtn" title="Colours" aria-label="Choose colours"></button>Colour</div>
@@ -158,7 +165,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 
 <p class="sub">Back up your projects and samples before switching: formats are not compatible between firmwares. Keep the FM-1 powered during a switch. Power loss mid-write can leave it unbootable.</p>
 </section>
-</div>
+</div></div>
 </main>
 <dialog id="palettes"><div class="emuBar"><b>Colours</b><button id="palClose">Close</button></div><div id="palGrid"><button class="sw" data-p="cream" aria-pressed="false" style="--b:#e7e0d4;--k:#3f4247"><span class="dev"></span>Cream</button><button class="sw" data-p="lilac" aria-pressed="false" style="--b:#d98fd0;--k:#9b5fcb"><span class="dev"></span>Lilac</button><button class="sw" data-p="graphite" aria-pressed="false" style="--b:#3b3b3d;--k:#161618"><span class="dev"></span>Graphite</button><button class="sw" data-p="orange" aria-pressed="false" style="--b:#e8501a;--k:#b8381f"><span class="dev"></span>Orange</button><button class="sw" data-p="blue" aria-pressed="false" style="--b:#ece9e1;--k:#3f6290"><span class="dev"></span>Blue</button><button class="sw" data-p="mint" aria-pressed="false" style="--b:#34363a;--k:#5ccfb4"><span class="dev"></span>Mint</button></div></dialog>
 <dialog id="info"><div class="emuBar"><b id="infoTitle"></b><button id="infoClose">Close</button></div><div id="infoBody" style="padding:4px 12px 12px"></div></dialog>
@@ -171,9 +178,9 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
   <div class="emuBox"><div class="emuBar"><b id="emuTitle"></b><span><a id="emuOpen" target="_blank" rel="noopener">Open in new tab</a> <button id="emuClose">Close</button></span></div>
   <iframe id="emuFrame" allow="autoplay; midi" title="FM-1 emulator"></iframe></div>
 </div>
-<script src="webupdate.js?v=14"></script>
-<script src="felucca.js?v=14"></script>
-<script src="samples-core.js?v=14"></script>
-<script src="app.js?v=14"></script>
+<script src="webupdate.js?v=17"></script>
+<script src="felucca.js?v=17"></script>
+<script src="samples-core.js?v=17"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
