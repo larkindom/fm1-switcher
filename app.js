@@ -88,7 +88,13 @@ const EXTRAS = [{ file: 'firmware/garden-main-5e185e6.fwsc', sha256: '2e8e1cb2f9
   source: 'https://github.com/twochannels/AURORA', release: 'https://github.com/twochannels/AURORA/releases/tag/v0.8.0', site: 'https://twochannels.github.io/AURORA/' } },
   { file: 'firmware/mutable-dreams-1.4.0.fwsc', sha256: 'd6682e1433f581285333f23629be20b96a595707776c6359d22d14e6542d6bda', name: 'Mutable Dreams', version: '1.4.0', product: 'FM-1_710010400',
   lic: 'GPL-3.0', chip: 'unknown', kind: 'other', info: { what: 'Mutable Dreams: six assignable synth tracks or a Lo-Fi kit plus three synths, 156 Biomes, per-track LFOs, granular effects, 32-step sequences, inspired by Mutable Instruments. Not on The Firmware Hub, so not vetted; flash-chip support unknown. Export User Banks first.', author: 'Kid Bunka', play: 'https://mutable-dreams.sugarypixie10.chatgpt.site/', editor: 'https://mutable-dreams.sugarypixie10.chatgpt.site/',
-  source: 'https://github.com/kidbee85-beep/mutable-dreams', release: 'https://github.com/kidbee85-beep/mutable-dreams/releases/tag/v1.4', site: 'https://github.com/kidbee85-beep/mutable-dreams' } }];
+  source: 'https://github.com/kidbee85-beep/mutable-dreams', release: 'https://github.com/kidbee85-beep/mutable-dreams/releases/tag/v1.4', site: 'https://github.com/kidbee85-beep/mutable-dreams' } },
+  { file: 'firmware/jazzy-0.1.0-beta.1.fwsc', sha256: 'bc2a97219635380ac8e4fd28bc471dd7a8cf088fe8cab26d84ee6a9902f652fd', name: 'JAZZY', version: '0.1.0-beta.1', product: 'FM-1_900',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'other', info: { what: 'JAZZY: 31 synth, drum and Break engines and 1,220 factory sounds, one sound per track. Public beta. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'Jazzy Rhythmer', play: 'https://jazzyrhythmer.github.io/Jazzy/emulator/', editor: 'https://jazzyrhythmer.github.io/Jazzy/editor/',
+  source: 'https://github.com/JazzyRhythmer/Jazzy', release: 'https://github.com/JazzyRhythmer/Jazzy/releases/tag/v0.1.0-beta.1', site: 'https://jazzyrhythmer.github.io/Jazzy/' } },
+  { file: 'firmware/rhythmer-0.1.2-dev1.fwsc', sha256: 'e91b3976880538839fb96d3230ae0f000e8fe3355f16b6e6012176ce1f3a51ac', name: 'Rhythmer', version: '0.1.2-dev1', product: 'FM-1_748023',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'groove', info: { what: 'Rhythmer: an FM-1 groovebox for building patterns, swapping drum sounds and performing break chops. Built on JIANT. Dev pre-release. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'Jazzy Rhythmer',
+  source: 'https://github.com/JazzyRhythmer/Rhythmer', release: 'https://github.com/JazzyRhythmer/Rhythmer/releases/tag/v0.1.2-dev1', site: 'https://jazzyrhythmer.github.io/Rhythmer/' } }];
 async function addExtra(x) {
   const r = await fetch(x.file); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
   const pkg = new Uint8Array(await r.arrayBuffer());
