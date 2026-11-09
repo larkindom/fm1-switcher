@@ -79,7 +79,16 @@ async function addHub(id, cat) {
 // Firmwares not on the hub: packages kept in this repo, pinned by SHA-256 (GitHub release downloads can't be fetched by a web page).
 const EXTRAS = [{ file: 'firmware/garden-main-5e185e6.fwsc', sha256: '2e8e1cb2f9e293dba3b1372bf9b08a9cf401a60acc66a6157c34f94046e9554c', name: 'Garden', version: 'main-5e185e6', product: 'FM-1_900',
   lic: 'GPL-3.0', chip: 'unknown', kind: 'groove', info: { what: 'Garden FM: custom firmware based on JIANT. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'nvhhh', play: 'https://nvhhh.github.io/Garden-FM/emu/',
-  source: 'https://github.com/nvhhh/Garden-FM', release: 'https://github.com/nvhhh/Garden-FM/releases/tag/main-5e185e6', site: 'https://nvhhh.github.io/Garden-FM/flasher/' } }];
+  source: 'https://github.com/nvhhh/Garden-FM', release: 'https://github.com/nvhhh/Garden-FM/releases/tag/main-5e185e6', site: 'https://nvhhh.github.io/Garden-FM/flasher/' } },
+  { file: 'firmware/revo-build2026110608.fwsc', sha256: '73308ff8f1bab7c6d9c36a0eb6a74e16c2b69a757ddcca559bf12411daab5736', name: 'ReVo', version: 'build2026110608', product: 'FM-1_998',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'other', info: { what: 'ReVo: generative soundscapes with two machines, Bioma and Atolls (built on Felucca and SLOOP). Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'gggguto',
+  source: 'https://gggguto.github.io/ReVo/install/ReVo-development-source.zip', release: 'https://gggguto.github.io/ReVo/install/', site: 'https://gggguto.github.io/ReVo/' } },
+  { file: 'firmware/aurora-0.8.0.fwsc', sha256: '723c2c162cc3f8950ff109d8833f9c84361aa361e05e97d03aff68725b79d7a0', name: 'AURORA', version: '0.8.0', product: 'FM-1_4747',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'other', info: { what: 'AURORA: epic film sounds (pads, horns, glass and bells) as a sound module for a dawless rig. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'twochannels', play: 'https://twochannels.github.io/AURORA/emu/',
+  source: 'https://github.com/twochannels/AURORA', release: 'https://github.com/twochannels/AURORA/releases/tag/v0.8.0', site: 'https://twochannels.github.io/AURORA/' } },
+  { file: 'firmware/mutable-dreams-1.4.0.fwsc', sha256: 'd6682e1433f581285333f23629be20b96a595707776c6359d22d14e6542d6bda', name: 'Mutable Dreams', version: '1.4.0', product: 'FM-1_710010400',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'other', info: { what: 'Mutable Dreams: six assignable synth tracks or a Lo-Fi kit plus three synths, 156 Biomes, per-track LFOs, granular effects, 32-step sequences, inspired by Mutable Instruments. Not on The Firmware Hub, so not vetted; flash-chip support unknown. Export User Banks first.', author: 'Kid Bunka', play: 'https://mutable-dreams.sugarypixie10.chatgpt.site/', editor: 'https://mutable-dreams.sugarypixie10.chatgpt.site/',
+  source: 'https://github.com/kidbee85-beep/mutable-dreams', release: 'https://github.com/kidbee85-beep/mutable-dreams/releases/tag/v1.4', site: 'https://github.com/kidbee85-beep/mutable-dreams' } }];
 async function addExtra(x) {
   const r = await fetch(x.file); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
   const pkg = new Uint8Array(await r.arrayBuffer());
