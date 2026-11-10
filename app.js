@@ -94,7 +94,10 @@ const EXTRAS = [{ file: 'firmware/garden-main-5e185e6.fwsc', sha256: '2e8e1cb2f9
   source: 'https://github.com/JazzyRhythmer/Jazzy', release: 'https://github.com/JazzyRhythmer/Jazzy/releases/tag/v0.1.0-beta.1', site: 'https://jazzyrhythmer.github.io/Jazzy/' } },
   { file: 'firmware/rhythmer-0.1.2-dev1.fwsc', sha256: 'e91b3976880538839fb96d3230ae0f000e8fe3355f16b6e6012176ce1f3a51ac', name: 'Rhythmer', version: '0.1.2-dev1', product: 'FM-1_748023',
   lic: 'GPL-3.0', chip: 'unknown', kind: 'groove', info: { what: 'Rhythmer: an FM-1 groovebox for building patterns, swapping drum sounds and performing break chops. Built on JIANT. Dev pre-release. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'Jazzy Rhythmer',
-  source: 'https://github.com/JazzyRhythmer/Rhythmer', release: 'https://github.com/JazzyRhythmer/Rhythmer/releases/tag/v0.1.2-dev1', site: 'https://jazzyrhythmer.github.io/Rhythmer/' } }];
+  source: 'https://github.com/JazzyRhythmer/Rhythmer', release: 'https://github.com/JazzyRhythmer/Rhythmer/releases/tag/v0.1.2-dev1', site: 'https://jazzyrhythmer.github.io/Rhythmer/' } },
+  { file: 'firmware/jamesos-1.0a-build2105.fwsc', sha256: 'fa6fb07ecfa0ae92a34ddd3c09b09b37308cf5f41384f4c14dd6535941a334e1', name: 'JamesOS', version: '1.0a-build2105', product: 'FM-1_9262105',
+  lic: 'GPL-3.0', chip: 'unknown', kind: 'groove', info: { what: 'JamesOS: 7-track groovebox (three instrument tracks, four drum lanes) with 24 Plaits engines, 64 presets, 64-step conditional sequencer. Alpha. "From V15" package: install from official V15; other firmwares may reject it. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'Gjelly', editor: 'https://gjelly.com/JamesOS/install',
+  source: 'https://gjelly.com/JamesOS/licenses', release: 'https://gjelly.com/JamesOS', site: 'https://gjelly.com/JamesOS' } }];
 async function addExtra(x) {
   const r = await fetch(x.file); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
   const pkg = new Uint8Array(await r.arrayBuffer());
