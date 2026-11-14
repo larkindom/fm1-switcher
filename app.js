@@ -307,7 +307,7 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 async function run(meta) {
   const force = $('force').checked;
   const oldChip = meta.chip === 'unknown' ? '\n\nWARNING: this firmware is not listed on The Firmware Hub, so nobody has vetted it, and its flash-chip support is unknown. On a newer FM-1 saving may fail.' : meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
-  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.${oldChip}`)) return;
+  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.\n\nSwitching to a very different firmware can leave settings from the old one that confuse the new one. To go back cleanly, restore a backup made while the old firmware was installed.${oldChip}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
     const community = identity && !/^(FM1_OFFICIAL_OPEN|FM1_COMMUNITY_\d+|FM-1_8\d{6}|FM-1_015)$/.test(identity);
