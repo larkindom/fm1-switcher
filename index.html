@@ -166,7 +166,8 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 <li><a href="https://github.com/simonjohansson/fm1-emulator/releases/latest" target="_blank" rel="noopener">fm1-emulator</a>: desktop emulator for Mac and Linux.</li>
 </ul></details>
 <details id="savesBox"><summary>My saves<span id="saveCount"></span></summary>
-<p class="sub" style="margin:8px 0">Backups of your project, samples and voice banks, kept in this browser and also downloaded as files. Restore works on the same firmware only. Drop an exported save into the box above to add it back.</p>
+<p class="sub" style="margin:8px 0">Backups of your project, samples and voice banks. Choose a backup folder and they are saved there (and restored from there); they are also kept in this browser, and downloaded when no folder is set. Restore works on the same firmware only. Drop a backup file into the box above to add it back.</p>
+<div id="folderRow" class="setRow"></div><div id="folderList"></div>
 <div id="saveList"></div></details>
 <div id="hist" class="sub"></div>
 <label class="adv"><input type="checkbox" id="force"> Allow switching from firmware this app doesn't recognise (official-format firmware only; community firmware ignores this)</label>
