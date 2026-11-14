@@ -143,13 +143,12 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 <p class="sub" style="margin:10px 3px">▶ on a card opens it in the <a href="https://joakimeriksson.github.io/fm1-emu/">fm1-emu</a> browser emulator, no FM-1 needed. For Ableton Live, use its <a href="https://github.com/joakimeriksson/fm1-emu/releases/latest">AU / VST3 instrument plugin</a> (Mac and Windows downloads): it runs the firmware inside Live. A web page can't load into Live itself; to use the browser emulator there, route Chrome's audio through a virtual device such as BlackHole and send MIDI over the IAC Driver.</p>
 <details id="rescue"><summary>Backup &amp; rescue tools</summary>
 <p class="sub" style="margin:8px 0">A web page can't read the whole flash. These tools can, and they cover the older-chip risk. Back up before you write anything to the FM-1.</p>
-<p class="sub" style="margin:8px 0">Getting into download mode, which these tools need, depends on what the FM-1 runs now. Use the first line that fits.</p>
+<p class="sub" style="margin:8px 0">Getting into download mode depends on what the FM-1 runs now. These steps come from M-Flasher's guide, and other tools may differ. Use the first line that fits.</p>
 <ul class="tools">
-<li>Normal firmware: connect it and use the tool's download mode button.</li>
+<li>Normal firmware, including the original M-VAVE firmware: connect it and click M-Flasher's DOWNLOAD MODE button. On original M-VAVE firmware no key combination works.</li>
 <li>M-bootloader installed: hold REC while switching it on.</li>
 <li>Felucca, SLOOP or Snoop37: hold OCT&minus; and OCT+ together for 5 seconds.</li>
 <li>Firmware that won't start: it is often in download mode already, so just connect it.</li>
-<li>Original M-VAVE firmware and bootloader: no key combination works, so use the tool's download mode button.</li>
 </ul>
 <ul class="tools">
 <li><a href="https://github.com/jvitkauskas/m-flasher/releases" target="_blank" rel="noopener">M-Flasher</a>: puts the FM-1 in download mode, saves the whole flash, installs a .fwsc. Works with broken firmware and the newer chip. It can also install m-bootloader, which adds a recovery menu so you can always get back into download mode from the unit's keys (recommended).</li>
