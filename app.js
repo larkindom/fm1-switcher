@@ -262,7 +262,7 @@ function showInfo(m) {
   $('infoTitle').textContent = m.label;
   if (i.what) box.append(Object.assign(document.createElement('p'), { textContent: i.what, className: 'sub', style: 'margin:6px 0' }));
   row('Author', i.author); row('Licence', m.lic); row('Released', i.date); row('Identity', m.product); row('Hub installs', m.installs ? String(m.installs) : ''); row('GitHub stars', i.stars ? String(i.stars) : '');
-  row('Flash chip', { old: 'Older chip only: saving may fail on newer FM-1s', new: 'Both FM-1 flash chips', any: 'Either chip', unknown: 'Unknown: not checked by the hub' }[m.chip]);
+  row('Flash chip', { old: 'Older chip only: saving may fail on newer FM-1s', new: 'Listed by the hub as saving on newer FM-1s (a screening filter, not a certification)', any: 'Listed by the hub as working on either chip (a screening filter, not a certification)', unknown: 'Unknown: not checked by the hub' }[m.chip]);
   row('Built from source', i.built ? 'Yes, GitHub signed this exact file' + (i.commit ? ` (commit ${i.commit.slice(0, 7)})` : '') : m.pkg ? 'Not verified by the hub' : '');
   const links = document.createElement('div'); links.className = 'setRow';
   for (const [t, u] of [['Release notes', i.release], ['Source', i.source], ['Project site', i.site], ['Editor', i.editor]]) if (/^https:\/\//.test(u || '')) links.append(Object.assign(document.createElement('a'), { textContent: t, href: u, target: '_blank', rel: 'noopener' }));
@@ -307,7 +307,8 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 async function run(meta) {
   const force = $('force').checked;
   const oldChip = meta.chip === 'unknown' ? '\n\nWARNING: this firmware is not listed on The Firmware Hub, so nobody has vetted it, and its flash-chip support is unknown. On a newer FM-1 saving may fail.' : meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
-  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.\n\nSwitching to a very different firmware can leave settings from the old one that confuse the new one. To go back cleanly, restore a backup made while the old firmware was installed.${oldChip}`)) return;
+  const chipNote = meta.kind === 'stock' ? '' : '\n\nFlash chip: check yours in M-Flasher (Device Info → Flash Chip): 0x856014 is the older chip, 0xB36014 the newer. Choose firmware whose author says it supports your chip; flashing official V15 or V16 first will not fix an incompatible one. A successful flash, a normal boot or a "SAVED" message does not prove compatibility, so after switching check that a save survives a full power cycle.';
+  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.\n\nSwitching to a very different firmware can leave settings from the old one that confuse the new one. To go back cleanly, restore a backup made while the old firmware was installed.${oldChip}${chipNote}`)) return;
   busy = true; render(); $('bar').style.width = '0';
   try {
     const community = identity && !/^(FM1_OFFICIAL_OPEN|FM1_COMMUNITY_\d+|FM-1_8\d{6}|FM-1_015)$/.test(identity);
