@@ -8,10 +8,11 @@ let access, updater, identity = null, busy = false;
 
 // --- library (IndexedDB: key = sha256, value = web-package meta incl. base64 data) ---
 const db = new Promise((ok, no) => {
-  const r = indexedDB.open('fm1-switcher', 2);
+  const r = indexedDB.open('fm1-switcher', 3);
   r.onupgradeneeded = () => {
     if (!r.result.objectStoreNames.contains('fw')) r.result.createObjectStore('fw', { keyPath: 'sha256' });
     if (!r.result.objectStoreNames.contains('saves')) r.result.createObjectStore('saves', { keyPath: 'id' });
+    if (!r.result.objectStoreNames.contains('meta')) r.result.createObjectStore('meta', { keyPath: 'id' });
   };
   // An older tab holding the previous version open would block the upgrade forever: say so, and let newer tabs step aside.
   r.onblocked = () => msg('Close your other FM-1 Switcher tabs, then reload this page.', true);
@@ -30,6 +31,36 @@ const allSaves = () => tx('readonly', s => s.getAll(), 'saves');
 const putSave = v => tx('readwrite', s => s.put(v), 'saves');
 const delSave = k => tx('readwrite', s => s.delete(k), 'saves');
 const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+// --- backup folder (File System Access API, Chrome and Edge): backups are written there first and restored from it ---
+// The folder handle is kept in this browser; a later session may have to ask for access again, which only works inside a click.
+const hasFS = !!window.showDirectoryPicker;
+const getFolder = async () => { try { const r = await tx('readonly', s => s.get('backupDir'), 'meta'); return (r && r.handle) || null; } catch { return null; } };
+const setFolder = h => tx('readwrite', s => h ? s.put({ id: 'backupDir', handle: h }) : s.delete('backupDir'), 'meta');
+async function folderReady(ask) {
+  const h = hasFS && await getFolder(); if (!h) return null;
+  try {
+    if (await h.queryPermission({ mode: 'readwrite' }) === 'granted') return h;
+    if (ask && await h.requestPermission({ mode: 'readwrite' }) === 'granted') return h;
+  } catch {}
+  return null;
+}
+async function chooseFolder() {
+  try { const h = await showDirectoryPicker({ id: 'fm1-backups', mode: 'readwrite' }); await setFolder(h); await renderSaves(); msg(`Backups will be saved to, and restored from, "${h.name}".`); return h; }
+  catch (e) { if (e.name !== 'AbortError') msg('Could not use that folder: ' + e.message, true); return null; }
+}
+// Files are named fm1-backup-<firmware>-<time>.json, so the newest one for a firmware is found by name and only that one is opened.
+const fileFor = out => `fm1-backup-${out.firmware}-${out.created.replace(/[:.]/g, '-')}.json`;
+async function folderBackups(fw) {
+  const dir = await folderReady(false), out = []; if (!dir) return out;
+  for await (const [name, h] of dir.entries()) if (h.kind === 'file' && name.startsWith('fm1-backup-') && name.endsWith('.json') && (!fw || name.startsWith(`fm1-backup-${fw}-`))) out.push({ name, h });
+  return out.sort((a, b) => b.name.localeCompare(a.name));
+}
+async function loadFolderSave(f) {
+  const m = JSON.parse(await (await f.h.getFile()).text());
+  if (m.format !== 'fm1-switcher-backup' || typeof m.firmware !== 'string' || typeof m.project !== 'string' || typeof m.samples !== 'string') throw new Error('not a valid save file');
+  return { ...m, id: m.id || crypto.randomUUID(), label: m.label || `${m.firmware} · ${m.created}` };
+}
 
 const msg = (t, err) => { $('msg').textContent = t; $('msg').className = err ? 'err' : ''; };
 const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode(...u8.subarray(i, i + 8192)); return btoa(s); };
@@ -130,27 +161,36 @@ async function backup() {
     const fw = (await all()).find(m => m.product === identity);
     out.id = crypto.randomUUID(); out.programs = lib.programs; out.label = `${fw ? fw.label : identity} · ${new Date(out.created).toLocaleString()}`;
     await putSave(out); await renderSaves();
-    const url = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' }));
-    Object.assign(document.createElement('a'), { href: url, download: `fm1-backup-${out.created.slice(0, 10)}.json` }).click();
-    URL.revokeObjectURL(url); localStorage.setItem('fm1-lastBackup', out.created);
-    msg('Saved in My saves, and a copy downloaded to your Downloads folder.'); ok = true;
+    let to = null; const dir = await folderReady(true);
+    if (dir) try { const w = await (await dir.getFileHandle(fileFor(out), { create: true })).createWritable(); await w.write(JSON.stringify(out)); await w.close(); to = `your backup folder "${dir.name}"`; } catch (e) { console.warn('folder write failed', e); }
+    if (!to) {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' }));
+      Object.assign(document.createElement('a'), { href: url, download: fileFor(out) }).click(); URL.revokeObjectURL(url);
+      to = 'your Downloads folder' + (hasFS ? ' (choose a backup folder in My saves to keep them in one place)' : '');
+    }
+    localStorage.setItem('fm1-lastBackup', out.created);
+    msg(`Saved in My saves and in ${to}.`); ok = true;
   } catch (e) {
     msg('Backup failed: ' + e.message + '. Backups only work under the official FM1 Open firmware; for other firmwares use their own editor.', true);
   } finally { try { await lib.disconnect(); } catch {} busy = false; $('backup').disabled = !identity; }
   return ok;
 }
-$('backup').onclick = backup;
+let askedFolder = false;
+$('backup').onclick = async () => { if (hasFS && !askedFolder && !(await getFolder())) { askedFolder = true; await chooseFolder(); } backup(); };
 // Firmware families that speak the project protocol backup() uses (FM1 Open and builds of it); stock V15 and other community firmware do not.
 const canBackup = () => !!identity && /^(FM1_OFFICIAL_OPEN|FM1_COMMUNITY_\d+|FM-1_8\d{6})$/.test(identity);
-// shortcut: offers only the newest save for the running firmware, not a picker; upgrade if people keep several per firmware.
+// shortcut: offers only the newest backup for the running firmware (folder or browser, whichever is newer), not a picker; upgrade if people keep several per firmware.
 async function offerRestore() {
   if (!identity) return;
-  const s = (await allSaves()).filter(x => x.firmware === identity).sort((a, b) => (b.created || '').localeCompare(a.created || ''))[0];
-  if (s && confirm(`You have a saved backup from this firmware: "${s.label}".\n\nRestore it now? This replaces the FM-1's current project, samples and voice banks.`)) await restore(s, true);
+  const c = [];
+  try { const f = (await folderBackups(identity))[0]; if (f) c.push({ s: await loadFolderSave(f), where: 'your backup folder' }); } catch (e) { console.warn('folder read failed', e); }
+  const m = (await allSaves()).filter(x => x.firmware === identity).sort((x, y) => (y.created || '').localeCompare(x.created || ''))[0]; if (m) c.push({ s: m, where: 'My saves' });
+  const best = c.sort((x, y) => (y.s.created || '').localeCompare(x.s.created || ''))[0];
+  if (best && confirm(`You have a saved backup from this firmware, in ${best.where}: "${best.s.label}".\n\nRestore it now? This replaces the FM-1's current project, samples and voice banks.`)) await restore(best.s, true);
 }
 async function hintSaves() {
-  const n = identity ? (await allSaves()).filter(x => x.firmware === identity).length : 0;
-  if (n && !busy) msg(`${n} save${n > 1 ? 's' : ''} for this firmware in My saves: open it to restore.`);
+  let n = 0; if (identity) { n = (await allSaves()).filter(x => x.firmware === identity).length; try { n = Math.max(n, (await folderBackups(identity)).length); } catch {} }
+  if (n && !busy) msg(`${n} backup${n > 1 ? 's' : ''} for this firmware found: open My saves to restore.`);
 }
 
 // Restore a save onto the FM-1. Same firmware only: formats differ between firmwares. Each write is read back and checked.
@@ -187,6 +227,27 @@ async function renderSaves() {
     row.append(btns); box.append(row);
   }
   if (!items.length) box.textContent = 'No saves yet. Connect an FM-1 running FM1 Open and press Back up.';
+  await renderFolder();
+}
+async function renderFolder() {
+  const row = $('folderRow'), list = $('folderList'); row.replaceChildren(); list.replaceChildren();
+  const label = Object.assign(document.createElement('span'), { className: 'sub' }), btns = document.createElement('span'); row.append(label, btns);
+  if (!hasFS) { label.textContent = 'This browser cannot save to a folder (use Chrome or Edge): backups go to your Downloads folder.'; return; }
+  const stored = await getFolder(), dir = await folderReady(false);
+  const pick = Object.assign(document.createElement('button'), { textContent: stored ? 'Change folder' : 'Choose backup folder', className: stored ? '' : 'p', onclick: chooseFolder });
+  if (!stored) { label.textContent = 'No backup folder yet: backups go to your Downloads folder.'; btns.append(pick); return; }
+  if (!dir) {
+    label.textContent = `Backup folder: ${stored.name}. Allow access to use it this session.`;
+    btns.append(Object.assign(document.createElement('button'), { textContent: 'Allow', className: 'p', onclick: async () => { await folderReady(true); renderSaves(); } }), pick); return;
+  }
+  label.textContent = `Backup folder: ${dir.name}`;
+  btns.append(pick, Object.assign(document.createElement('button'), { textContent: 'Forget', onclick: async () => { await setFolder(null); renderSaves(); } }));
+  for (const f of await folderBackups()) {
+    const r = document.createElement('div'); r.className = 'setRow';
+    r.append(Object.assign(document.createElement('span'), { textContent: f.name.replace(/^fm1-backup-|\.json$/g, '') }),
+      Object.assign(document.createElement('button'), { textContent: 'Restore', className: 'p', onclick: async () => { try { await restore(await loadFolderSave(f)); } catch (e) { msg(f.name + ': ' + e.message, true); } } }));
+    list.append(r);
+  }
 }
 
 // --- settings: delete firmware, reset ---
@@ -319,8 +380,10 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 
 async function run(meta) {
   const force = $('force').checked;
+  if (canBackup()) await folderReady(true);   // ask for folder access now, while the click is fresh
+
   const oldChip = meta.chip === 'unknown' ? '\n\nWARNING: this firmware is not listed on The Firmware Hub, so nobody has vetted it, and its flash-chip support is unknown. On a newer FM-1 saving may fail.' : meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
-  const backupLine = canBackup() ? 'Your project, samples and voice banks will be backed up first (kept in My saves, and a copy is downloaded).\n\n' : 'Back up first: the automatic backup only works under official FM1 Open firmware, so use your current firmware\'s own editor.\n\n';
+  const backupLine = canBackup() ? 'Your project, samples and voice banks will be backed up first (kept in My saves, and written to your backup folder, or downloaded if none is set).\n\n' : 'Back up first: the automatic backup only works under official FM1 Open firmware, so use your current firmware\'s own editor.\n\n';
   const chipNote = meta.kind === 'stock' ? '' : '\n\nFlash chip: check yours in M-Flasher (Device Info → Flash Chip): 0x856014 is the older chip, 0xB36014 the newer. Choose firmware whose author says it supports your chip; flashing official V15 or V16 first will not fix an incompatible one. A successful flash, a normal boot or a "SAVED" message does not prove compatibility, so after switching check that a save survives a full power cycle.';
   if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\n${backupLine}Do not unplug or power off until it finishes.\n\nSwitching to a very different firmware can leave settings from the old one that confuse the new one. To go back cleanly, restore a backup made while the old firmware was installed.${oldChip}${chipNote}`)) return;
   if (canBackup() && !await backup() && !confirm('The automatic backup did not finish, so nothing is saved yet.\n\nSwitch anyway?')) return;
