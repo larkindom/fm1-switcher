@@ -120,7 +120,7 @@ async function runFelucca(m) {
 // --- local backup: project, samples and voice banks, saved as one file in your Downloads ---
 // Works only while the FM-1 runs M-VAVE's FM1 Open firmware (the protocol FM1Web.Library speaks).
 async function backup() {
-  if (busy) return; busy = true; $('backup').disabled = true; const lib = new FM1Web.Library(access);
+  if (busy) return false; busy = true; $('backup').disabled = true; const lib = new FM1Web.Library(access); let ok = false;
   try {
     msg('Connecting for backup…'); await lib.connect();
     const out = { format: 'fm1-switcher-backup', version: 1, created: new Date().toISOString(), firmware: identity };
@@ -133,19 +133,32 @@ async function backup() {
     const url = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' }));
     Object.assign(document.createElement('a'), { href: url, download: `fm1-backup-${out.created.slice(0, 10)}.json` }).click();
     URL.revokeObjectURL(url); localStorage.setItem('fm1-lastBackup', out.created);
-    msg('Saved in My saves, and a copy downloaded to your Downloads folder.');
+    msg('Saved in My saves, and a copy downloaded to your Downloads folder.'); ok = true;
   } catch (e) {
     msg('Backup failed: ' + e.message + '. Backups only work under the official FM1 Open firmware; for other firmwares use their own editor.', true);
   } finally { try { await lib.disconnect(); } catch {} busy = false; $('backup').disabled = !identity; }
+  return ok;
 }
 $('backup').onclick = backup;
+// Firmware families that speak the project protocol backup() uses (FM1 Open and builds of it); stock V15 and other community firmware do not.
+const canBackup = () => !!identity && /^(FM1_OFFICIAL_OPEN|FM1_COMMUNITY_\d+|FM-1_8\d{6})$/.test(identity);
+// shortcut: offers only the newest save for the running firmware, not a picker; upgrade if people keep several per firmware.
+async function offerRestore() {
+  if (!identity) return;
+  const s = (await allSaves()).filter(x => x.firmware === identity).sort((a, b) => (b.created || '').localeCompare(a.created || ''))[0];
+  if (s && confirm(`You have a saved backup from this firmware: "${s.label}".\n\nRestore it now? This replaces the FM-1's current project, samples and voice banks.`)) await restore(s, true);
+}
+async function hintSaves() {
+  const n = identity ? (await allSaves()).filter(x => x.firmware === identity).length : 0;
+  if (n && !busy) msg(`${n} save${n > 1 ? 's' : ''} for this firmware in My saves: open it to restore.`);
+}
 
 // Restore a save onto the FM-1. Same firmware only: formats differ between firmwares. Each write is read back and checked.
-async function restore(s) {
+async function restore(s, confirmed) {
   if (busy) return;
   if (!identity) return msg('Connect the FM-1 first.', true);
   if (identity !== s.firmware) return msg(`This save is from ${s.firmware} but the FM-1 is running ${identity}. Switch to that firmware first: saves don't carry across firmwares.`, true);
-  if (!confirm(`Restore "${s.label}"?\n\nThis replaces the FM-1's current project, samples and voice banks. Keep the FM-1 plugged in and powered until it finishes.`)) return;
+  if (!confirmed && !confirm(`Restore "${s.label}"?\n\nThis replaces the FM-1's current project, samples and voice banks. Keep the FM-1 plugged in and powered until it finishes.`)) return;
   busy = true; render(); $('emu').hidden = true; const lib = new FM1Web.Library(access);
   try {
     await lib.connect();
@@ -200,7 +213,7 @@ async function connect() {
   try {
     access = await navigator.requestMIDIAccess({ sysex: true });
     access.onstatechange = () => { if (!busy) probe(); };
-    await probe();
+    await probe(); await hintSaves();
   } catch (e) { msg('MIDI access failed: ' + e.message, true); }
 }
 async function probe() {
@@ -307,21 +320,24 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 async function run(meta) {
   const force = $('force').checked;
   const oldChip = meta.chip === 'unknown' ? '\n\nWARNING: this firmware is not listed on The Firmware Hub, so nobody has vetted it, and its flash-chip support is unknown. On a newer FM-1 saving may fail.' : meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
+  const backupLine = canBackup() ? 'Your project, samples and voice banks will be backed up first (kept in My saves, and a copy is downloaded).\n\n' : 'Back up first: the automatic backup only works under official FM1 Open firmware, so use your current firmware\'s own editor.\n\n';
   const chipNote = meta.kind === 'stock' ? '' : '\n\nFlash chip: check yours in M-Flasher (Device Info → Flash Chip): 0x856014 is the older chip, 0xB36014 the newer. Choose firmware whose author says it supports your chip; flashing official V15 or V16 first will not fix an incompatible one. A successful flash, a normal boot or a "SAVED" message does not prove compatibility, so after switching check that a save survives a full power cycle.';
-  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\nBack up first (the Back up button works under official FM1 Open firmware only). Do not unplug or power off until it finishes.\n\nSwitching to a very different firmware can leave settings from the old one that confuse the new one. To go back cleanly, restore a backup made while the old firmware was installed.${oldChip}${chipNote}`)) return;
-  busy = true; render(); $('bar').style.width = '0';
+  if (!confirm(`Switch the FM-1 to "${meta.label}"?\n\n${backupLine}Do not unplug or power off until it finishes.\n\nSwitching to a very different firmware can leave settings from the old one that confuse the new one. To go back cleanly, restore a backup made while the old firmware was installed.${oldChip}${chipNote}`)) return;
+  if (canBackup() && !await backup() && !confirm('The automatic backup did not finish, so nothing is saved yet.\n\nSwitch anyway?')) return;
+  busy = true; render(); $('bar').style.width = '0'; let done = false;
   try {
     const community = identity && !/^(FM1_OFFICIAL_OPEN|FM1_COMMUNITY_\d+|FM-1_8\d{6}|FM-1_015)$/.test(identity);
-    if (meta.pkg || (meta.kind === 'stock' && community)) { if (meta.kind === 'stock') await FM1Web.prepare(meta); await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; return render(); }
+    if (meta.pkg || (meta.kind === 'stock' && community)) { if (meta.kind === 'stock') await FM1Web.prepare(meta); await runFelucca(meta); msg('Done: now running ' + meta.label); logHist(meta); await probe(); busy = false; render(); return offerRestore(); }
     const pkg = await FM1Web.prepare(meta);
     updater = new FM1Web.Updater(access, pkg, (t, p) => { msg(String(t)); if (p != null) $('bar').style.width = p + '%'; });
     const r = await updater.connect({ force });
     if (r.migration) throw new Error('Current firmware (' + r.identity + ') is not recognised. Tick "Allow switching from firmware this app doesn\'t recognise" and retry.');
     if (r.same) throw new Error('That firmware is already installed.');
     await updater.install({ force });
-    msg('Done: now running ' + meta.label); logHist(meta); await probe();
+    msg('Done: now running ' + meta.label); logHist(meta); await probe(); done = true;
   } catch (e) { msg(e.message, true); }
   busy = false; render();
+  if (done) await offerRestore();
 }
 
 $('connect').onclick = connect;
