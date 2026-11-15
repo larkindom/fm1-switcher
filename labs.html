@@ -95,7 +95,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 #go.on{background:#38d27a;color:#06240f}.strip input[type=number]{width:80px}
 .slot header{display:flex;gap:6px;align-items:center}.slot header>*{flex:0 0 auto}.slot header select{flex:1 1 0;min-width:0}.slot header button{padding:7px 9px}
 .slot{gap:8px}.slot iframe{width:100%;height:320px;border:0;border-radius:13px;background:#000}
-.empty{height:320px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;border-radius:13px;background:var(--line);font-size:12px;opacity:.8}
+.empty{height:320px;border-radius:13px;overflow:hidden;background:#dc7d4c}.empty svg{display:block;width:100%;height:100%}
 .slot.big{position:fixed;inset:3vh 3vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.65)}
 .slot.big iframe,.slot.big .empty{flex:1;height:auto}
 @media (max-width:860px){.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(2,66px)}}
@@ -135,6 +135,27 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(slots)); } c
 
 document.querySelectorAll('[name=mode]').forEach(r => r.onchange = () => { location.href = r.value; });
 
+// a paused slot shows an FM-1 faceplate at default settings, with the prompt on its screen
+function placeholder(name) {
+  const k = (x, y, r, a, t, ty) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#2a1c16" stroke="#120b08" stroke-width="3"/><line x1="${x}" y1="${y - r + 6}" x2="${x}" y2="${y - 6}" stroke="#e8d9cf" stroke-width="4" stroke-linecap="round" transform="rotate(${a} ${x} ${y})"/><text x="${x}" y="${ty}" text-anchor="middle" font-size="15" font-weight="700" fill="#3b1a0e">${t}</text>`;
+  const b = (x, y, t) => `<rect x="${x}" y="${y}" width="62" height="44" rx="9" fill="#8b4a3a"/><text x="${x + 31}" y="${y + 28}" text-anchor="middle" font-size="16" font-weight="700" fill="#f3d9cc">${t}</text>`;
+  const row1 = ['FX', 'SEL', 'ENV', 'LFO', 'EDIT', 'GLO'], row2 = ['HOME', 'SAVE', 'ARP', 'SEQ', 'PLAY', 'REC'];
+  const white = Array.from({ length: 16 }, (_, i) => `<rect x="${40 + i * 50.5}" y="420" width="44" height="76" rx="12" fill="#8b4a3a"/>`).join('');
+  const black = [0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14].map(i => `<rect x="${68 + i * 50.5}" y="348" width="38" height="62" rx="12" fill="#8b4a3a"/>`).join('');
+  const n = String(name || '').slice(0, 14).toUpperCase().replace(/[&<>"]/g, '');
+  return `<svg viewBox="0 0 872 636" preserveAspectRatio="xMidYMid meet" font-family="'Space Mono',ui-monospace,Menlo,monospace" role="img" aria-label="FM-1: press play">
+<rect width="872" height="636" fill="#dc7d4c"/>
+${k(65, 175, 22, 70, 'MASTER', 135)}${k(137, 175, 22, 0, 'SELECT', 135)}${k(65, 255, 22, 0, 'PRESET', 218)}${k(137, 255, 22, 0, 'ALGO', 218)}
+${k(468, 175, 22, 0, 'KN1', 135)}${k(580, 175, 22, 0, 'KN2', 135)}${k(691, 175, 22, 0, 'KN3', 135)}${k(802, 175, 22, 0, 'KN4', 135)}
+<rect x="188" y="124" width="190" height="192" rx="16" fill="#17110e"/><rect x="200" y="136" width="166" height="168" rx="6" fill="#0d1014"/>
+<text x="206" y="162" font-size="26" font-weight="700" fill="#fff">90</text><text x="236" y="162" font-size="11" fill="#9aa">BPM</text>
+<text x="283" y="226" text-anchor="middle" font-size="19" font-weight="700" fill="#f4efe6">PRESS PLAY</text>
+<text x="283" y="252" text-anchor="middle" font-size="12" fill="#9bee5e">${n || 'PICK A FIRMWARE'}</text>
+<rect x="398" y="200" width="452" height="116" rx="16" fill="#7a4034"/>
+${row1.map((t, i) => b(412 + i * 73.5, 212, t)).join('')}${row2.map((t, i) => b(412 + i * 73.5, 262, t)).join('')}
+<rect x="24" y="332" width="826" height="188" rx="14" fill="#7a4034"/>${black}${white}
+</svg>`;
+}
 function slotEl(v) {
   const el = document.createElement('div'); el.className = 'slot card';
   const head = document.createElement('header'), sel = document.createElement('select');
@@ -149,16 +170,16 @@ function slotEl(v) {
   const body = Object.assign(document.createElement('div'), { className: 'empty' });
   const fw = () => fws.find(f => f.id === sel.value);
   let frame = null;
+  const show = () => { body.innerHTML = placeholder(fw() ? fw().name : ''); };
   const pause = () => { if (frame) { frame.src = 'about:blank'; frame.replaceWith(body); frame = null; } play.textContent = '▶'; play.title = 'Play'; };
   play.onclick = () => {
     if (frame) return pause();
     frame = Object.assign(document.createElement('iframe'), { title: fw().name, src: fw().url || PLAYER + '?fw=' + encodeURIComponent(sel.value) + '&embed=1' });
     frame.allow = 'midi; autoplay'; body.replaceWith(frame); play.textContent = '⏸'; play.title = 'Pause';
   };
-  sel.onchange = () => { pause(); if (idx() >= 0) { slots[idx()] = sel.value; save(); } play.disabled = !sel.value; const f = fw(); ed.hidden = !(f && /^https:\/\//.test(f.editor || '')); if (f) ed.href = f.editor; body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.'; };
+  sel.onchange = () => { pause(); if (idx() >= 0) { slots[idx()] = sel.value; save(); } play.disabled = !sel.value; const f = fw(); ed.hidden = !(f && /^https:\/\//.test(f.editor || '')); if (f) ed.href = f.editor; show(); };
   big.onclick = () => { el.classList.toggle('big'); big.textContent = el.classList.contains('big') ? '✕ Close' : '⤢'; };
   del.onclick = () => { slots.splice(idx(), 1); save(); el.remove(); $('add').hidden = slots.length >= MAX; };
-  body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.';
   head.append(sel, play, big, ed, del); el.append(head, body);
   sel.dispatchEvent(new Event('change'));
   return el;
