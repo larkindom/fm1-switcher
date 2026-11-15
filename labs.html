@@ -25,11 +25,10 @@ button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}input[
 #go.on{background:#38d27a;color:#06240f}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px}
 .slot{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:20px;background:var(--card);box-shadow:0 5px 0 rgba(0,0,0,.4),inset 0 2px 0 var(--hi)}
-.slot.big{grid-column:1/-1}
+.slot.big{position:fixed;inset:3vh 3vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.65)}
 .slot header{display:flex;gap:6px;flex-wrap:wrap}.slot header select{flex:1 1 100%;min-width:0}
-.slot iframe{width:100%;height:320px;border:0;border-radius:13px;background:#000}.slot.big iframe{height:min(720px,80vh)}
+.slot iframe{width:100%;height:320px;border:0;border-radius:13px;background:#000}.slot.big iframe,.slot.big .empty{flex:1;height:auto}
 .empty{height:320px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;border-radius:13px;background:var(--line);font-size:12px;opacity:.8}
-.slot.big .empty{height:200px}
 </style>
 </head>
 <body>
@@ -62,7 +61,7 @@ function slotEl(i) {
   for (const f of fws) sel.append(new Option(f.name + ' · ' + f.kind, f.id));
   sel.value = slots[i];
   const play = Object.assign(document.createElement('button'), { textContent: '▶ Play', disabled: !sel.value });
-  const big = Object.assign(document.createElement('button'), { textContent: '⤢ Expand', title: 'Larger player, with its full panel and settings' });
+  const big = Object.assign(document.createElement('button'), { textContent: '⤢ Expand', className: 'x', title: 'Open the full player (Esc closes)' });
   const ed = Object.assign(document.createElement('a'), { textContent: '✎', title: 'Open its editor', target: '_blank', rel: 'noopener', hidden: true });
   const del = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove slot' });
   const body = Object.assign(document.createElement('div'), { className: 'empty' });
@@ -75,13 +74,14 @@ function slotEl(i) {
     frame.allow = 'midi; autoplay'; body.replaceWith(frame); play.textContent = '⏸ Pause';
   };
   sel.onchange = () => { pause(); slots[i] = sel.value; save(); play.disabled = !sel.value; const f = fw(); ed.hidden = !(f && /^https:\/\//.test(f.editor || '')); if (f) ed.href = f.editor; body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.'; };
-  big.onclick = () => { el.classList.toggle('big'); big.textContent = el.classList.contains('big') ? '⤡ Collapse' : '⤢ Expand'; };
+  big.onclick = () => { el.classList.toggle('big'); big.textContent = el.classList.contains('big') ? '✕ Close' : '⤢ Expand'; };
   del.onclick = () => { slots.splice(i, 1); save(); draw(); };
   body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.';
   head.append(sel, play, big, ed, del); el.append(head, body);
   sel.dispatchEvent(new Event('change')); slots[i] = sel.value;
   return el;
 }
+addEventListener('keydown', e => { if (e.key === 'Escape') { const b = document.querySelector('.slot.big .x'); if (b) b.click(); } });
 function draw() { $('slots').replaceChildren(...slots.map((_, i) => slotEl(i))); $('add').hidden = slots.length >= MAX; }
 $('add').onclick = () => { slots.push(''); save(); draw(); };
 fetch('https://thefirmwarehub.com/catalog.json').then(r => r.json()).then(c => { fws = c.firmwares.slice().sort((a, b) => a.name.localeCompare(b.name)); })
