@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 Labs</title>
+<script>try{var t=localStorage.getItem("fm1-palette");if(t)document.documentElement.dataset.palette=t}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap">
+<style>:root,:root[data-palette=cream]{--bg:#e7e0d4;--card:#f6f1e8;--ink:#2b2b2e;--edge:#3a3a3f;--hi:#ffffff;--shade:#d5cdbd;--acc:#3f4247;--accink:#f4efe6;--line:#cfc6b6}
+:root[data-palette=lilac]{--bg:#d98fd0;--card:#f3d5ee;--ink:#3a1f4a;--edge:#5e2f78;--hi:#fbe9f8;--shade:#c27ab9;--acc:#9b5fcb;--accink:#ffffff;--line:#c791c0}
+:root[data-palette=graphite]{--bg:#3b3b3d;--card:#4a4a4d;--ink:#ececec;--edge:#151516;--hi:#6a6a6e;--shade:#2a2a2c;--acc:#161618;--accink:#ffffff;--line:#5a5a5e}
+:root[data-palette=orange]{--bg:#e8501a;--card:#ffd9c4;--ink:#3b150a;--edge:#6a1f0a;--hi:#fff0e8;--shade:#d4906f;--acc:#b8381f;--accink:#ffffff;--line:#e07a52}
+:root[data-palette=blue]{--bg:#ece9e1;--card:#fbfaf6;--ink:#1f2b3d;--edge:#2a3f5c;--hi:#ffffff;--shade:#d3cfc4;--acc:#3f6290;--accink:#ffffff;--line:#c9c6bc}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace}
+main{max-width:1200px;margin:0 auto;padding:18px}
+.mode{display:flex;gap:6px;margin:0 0 16px;padding:4px;width:max-content;border-radius:999px;background:var(--shade)}
+.mode label{cursor:pointer;padding:5px 16px;border-radius:999px;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.mode input{position:absolute;opacity:0;pointer-events:none}.mode label:has(:checked){background:var(--acc);color:var(--accink)}.mode label:has(:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
+h1{font-size:16px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4px}.sub{font-size:12px;opacity:.75;margin:0 0 14px}
+button,select,input[type=number]{font:inherit;font-size:12px;color:var(--ink);background:var(--card);border:0;border-radius:9px;padding:7px 12px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35)}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}input[type=number]{width:80px;cursor:text}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;margin-bottom:16px;border-radius:16px;background:var(--shade)}
+.bar label{display:flex;gap:6px;align-items:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+#go.on{background:#38d27a;color:#06240f}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px}
+.slot{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:20px;background:var(--card);box-shadow:0 5px 0 rgba(0,0,0,.4),inset 0 2px 0 var(--hi)}
+.slot.big{grid-column:1/-1}
+.slot header{display:flex;gap:6px;flex-wrap:wrap}.slot header select{flex:1 1 100%;min-width:0}
+.slot iframe{width:100%;height:320px;border:0;border-radius:13px;background:#000}.slot.big iframe{height:min(720px,80vh)}
+.empty{height:320px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;border-radius:13px;background:var(--line);font-size:12px;opacity:.8}
+.slot.big .empty{height:200px}
+</style>
+</head>
+<body>
+<main>
+<nav class="mode" aria-label="Mode"><label><input type="radio" name="mode" value="index.html">Switcher</label><label><input type="radio" name="mode" value="labs.html" checked>Labs</label></nav>
+<h1>FM-1 Labs</h1>
+<p class="sub">Run several firmwares at once, each in its own player. Slots start paused: press Play on the ones you want, so a slow computer isn't asked to run six at once.</p>
+<div class="bar">
+  <button id="go">Start clock</button>
+  <label>BPM <input id="bpm" type="number" min="30" max="300" value="120"></label>
+  <label>MIDI clock out <select id="out"><option value="">none</option></select></label>
+  <span class="sub" id="note" style="margin:0">Send the clock to a loopback port (macOS: IAC Driver, Windows: loopMIDI) and choose that port as the MIDI input inside each player.</span>
+</div>
+<div class="grid" id="slots"></div>
+<p><button id="add">+ Add slot</button></p>
+</main>
+<script>
+const $ = id => document.getElementById(id), PLAYER = 'https://remotefm1.com/', KEY = 'fm1-labs', MAX = 6;
+let fws = [], slots;
+try { slots = JSON.parse(localStorage.getItem(KEY)); } catch {}
+if (!Array.isArray(slots) || !slots.length) slots = ['', '', '', ''];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(slots)); } catch {} };
+
+document.querySelectorAll('[name=mode]').forEach(r => r.onchange = () => { location.href = r.value; });
+
+function slotEl(i) {
+  const el = document.createElement('div'); el.className = 'slot';
+  const head = document.createElement('header'), sel = document.createElement('select');
+  sel.append(new Option('Choose firmware…', ''));
+  for (const f of fws) sel.append(new Option(f.name + ' · ' + f.kind, f.id));
+  sel.value = slots[i];
+  const play = Object.assign(document.createElement('button'), { textContent: '▶ Play', disabled: !sel.value });
+  const big = Object.assign(document.createElement('button'), { textContent: '⤢ Expand', title: 'Larger player, with its full panel and settings' });
+  const ed = Object.assign(document.createElement('a'), { textContent: '✎', title: 'Open its editor', target: '_blank', rel: 'noopener', hidden: true });
+  const del = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove slot' });
+  const body = Object.assign(document.createElement('div'), { className: 'empty' });
+  const fw = () => fws.find(f => f.id === sel.value);
+  let frame = null;
+  const pause = () => { if (frame) { frame.src = 'about:blank'; frame.replaceWith(body); frame = null; } play.textContent = '▶ Play'; };
+  play.onclick = () => {
+    if (frame) return pause();
+    frame = Object.assign(document.createElement('iframe'), { title: fw().name, src: PLAYER + '?fw=' + encodeURIComponent(sel.value) + '&embed=1' });
+    frame.allow = 'midi; autoplay'; body.replaceWith(frame); play.textContent = '⏸ Pause';
+  };
+  sel.onchange = () => { pause(); slots[i] = sel.value; save(); play.disabled = !sel.value; const f = fw(); ed.hidden = !(f && /^https:\/\//.test(f.editor || '')); if (f) ed.href = f.editor; body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.'; };
+  big.onclick = () => { el.classList.toggle('big'); big.textContent = el.classList.contains('big') ? '⤡ Collapse' : '⤢ Expand'; };
+  del.onclick = () => { slots.splice(i, 1); save(); draw(); };
+  body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.';
+  head.append(sel, play, big, ed, del); el.append(head, body);
+  sel.dispatchEvent(new Event('change')); slots[i] = sel.value;
+  return el;
+}
+function draw() { $('slots').replaceChildren(...slots.map((_, i) => slotEl(i))); $('add').hidden = slots.length >= MAX; }
+$('add').onclick = () => { slots.push(''); save(); draw(); };
+fetch('https://thefirmwarehub.com/catalog.json').then(r => r.json()).then(c => { fws = c.firmwares.slice().sort((a, b) => a.name.localeCompare(b.name)); })
+  .catch(() => { $('note').textContent = 'Could not load the firmware list from thefirmwarehub.com.'; }).finally(draw);
+
+// MIDI clock: 24 pulses per quarter note, scheduled a little ahead so the timing doesn't depend on the page's timers
+let midi = null, out = null, running = false, next = 0, timer = 0;
+const outs = () => midi ? [...midi.outputs.values()] : [];
+async function getMidi() {
+  if (midi || !navigator.requestMIDIAccess) return midi;
+  try { midi = await navigator.requestMIDIAccess(); midi.onstatechange = fill; fill(); } catch { $('note').textContent = 'MIDI access was refused: allow it in the address bar.'; }
+  return midi;
+}
+function fill() { const v = $('out').value; $('out').replaceChildren(new Option('none', ''), ...outs().map(o => new Option(o.name, o.id))); $('out').value = outs().some(o => o.id === v) ? v : ''; out = outs().find(o => o.id === $('out').value) || null; }
+$('out').onfocus = getMidi; $('out').onchange = () => { out = outs().find(o => o.id === $('out').value) || null; };
+const tick = () => { const now = performance.now(), ms = 2500 / Math.min(300, Math.max(30, +$('bpm').value || 120)); while (next < now + 120) { out && out.send([0xF8], next); next += ms; } };
+$('go').onclick = async () => {
+  await getMidi(); running = !running;
+  if (running) { next = performance.now() + 50; out && out.send([0xFA], next); timer = setInterval(tick, 25); }
+  else { clearInterval(timer); out && out.send([0xFC]); }
+  $('go').textContent = running ? 'Stop clock' : 'Start clock'; $('go').classList.toggle('on', running);
+};
+</script>
+</body>
+</html>

@@ -17,6 +17,9 @@ body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.5 'Space Mono',ui-mo
  background-image:url(assets/desk.svg);background-size:1600px 1200px;background-position:center top}
 /* shortcut: vignette lives on its own fixed layer, background-attachment:fixed repaints the whole page every scroll frame on weak GPUs */
 body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 85% 50% at 50% -8%,rgba(255,238,205,.45),transparent 68%),radial-gradient(ellipse 130% 90% at 50% 125%,rgba(10,4,0,.6),transparent 62%),radial-gradient(ellipse 60% 100% at 0% 50%,rgba(10,4,0,.32),transparent 70%),radial-gradient(ellipse 60% 100% at 100% 50%,rgba(10,4,0,.32),transparent 70%)}
+.mode{position:relative;z-index:2;display:flex;gap:6px;margin:0 auto 14px;padding:4px;width:max-content;border-radius:999px;background:rgba(0,0,0,.35);color:#f4efe6}
+.mode label{cursor:pointer;padding:5px 16px;border-radius:999px;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.mode input{position:absolute;opacity:0;pointer-events:none}.mode label:has(:checked){background:#f4efe6;color:#2b2b2e}.mode label:has(:focus-visible){outline:2px solid #f4efe6;outline-offset:2px}
 .desk{padding:34px 18px 70px}
 /* the device */
 .rig{position:relative;z-index:1;max-width:1020px;margin:0 auto}
@@ -90,6 +93,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 </head>
 <body>
 <main class="desk">
+<nav class="mode" aria-label="Mode"><label><input type="radio" name="mode" value="index.html" checked>Switcher</label><label><input type="radio" name="mode" value="labs.html">Labs</label></nav>
 <svg class="cable" viewBox="0 0 300 140" aria-hidden="true"><path d="M30 140 L30 84 C30 46 70 36 112 32 S196 22 238 -6 S300 -50 330 -90" fill="none" stroke="#0e0e0f" stroke-width="9" stroke-linecap="round"/><path d="M28 140 L28 84 C28 44 68 34 110 30 S194 20 236 -8 S298 -52 328 -92" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2" stroke-linecap="round"/></svg>
 <div class="rig"><div class="device">
 <header class="top">
@@ -192,5 +196,6 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 <script src="felucca.js?v=18"></script>
 <script src="samples-core.js?v=18"></script>
 <script src="app.js?v=18"></script>
+<script>document.querySelectorAll('[name=mode]').forEach(r=>r.onchange=()=>{location.href=r.value})</script>
 </body>
 </html>
