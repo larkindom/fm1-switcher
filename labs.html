@@ -90,7 +90,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 #palGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:12px}
 @media (max-width:860px){.cable{display:none}.rig::before{top:8px;bottom:-8px;border-radius:28px}.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(4,1fr)}.btns{grid-template-columns:repeat(3,1fr)}.device{padding:18px 16px 22px;border-radius:28px}.desk{padding:14px 8px 40px}.tray{padding:12px;border-radius:20px}}
 
-.mode{z-index:0}.top{grid-template-columns:auto minmax(0,1fr) auto}.knobs{grid-template-columns:66px}#kBpm{touch-action:none;cursor:ns-resize}.strip{margin-top:18px}
+.mode{z-index:0}.top{grid-template-columns:auto minmax(0,1fr) auto}.knobs{grid-template-columns:repeat(2,66px)}#kBpm{touch-action:none;cursor:ns-resize}.strip{margin-top:18px}
 .grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
 #go.on{background:#38d27a;color:#06240f}.strip input[type=number]{width:80px}
 .slot header{display:flex;gap:6px;flex-wrap:wrap}.slot header select{flex:1 1 100%;min-width:0}.slot header>*{flex:0 0 auto}.slot header select{flex:1 1 100%}
@@ -98,7 +98,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 .empty{height:320px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;border-radius:13px;background:var(--line);font-size:12px;opacity:.8}
 .slot.big{position:fixed;inset:3vh 3vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.65)}
 .slot.big iframe,.slot.big .empty{flex:1;height:auto}
-@media (max-width:860px){.top{grid-template-columns:1fr}.knobs{grid-template-columns:66px}}
+@media (max-width:860px){.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(2,66px)}}
 </style>
 </head>
 <body>
@@ -107,7 +107,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 <svg class="cable" viewBox="0 0 300 140" aria-hidden="true"><path d="M30 140 L30 84 C30 46 70 36 112 32 S196 22 238 -6 S300 -50 330 -90" fill="none" stroke="#0e0e0f" stroke-width="9" stroke-linecap="round"/><path d="M28 140 L28 84 C28 44 68 34 110 30 S194 20 236 -8 S298 -52 328 -92" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2" stroke-linecap="round"/></svg>
 <div class="rig"><div class="device">
 <header class="top">
-  <div class="knobs"><div class="kw"><button class="knob" id="kBpm" role="slider" aria-label="BPM" aria-valuemin="30" aria-valuemax="300" title="BPM: drag up or down, scroll, or use arrow keys (Shift for 10)"></button>BPM</div></div>
+  <div class="knobs"><div class="kw"><button class="knob" id="kBpm" role="slider" aria-label="BPM" aria-valuemin="30" aria-valuemax="300" title="BPM: drag up or down, scroll, or use arrow keys (Shift for 10)"></button>BPM</div><div class="kw"><button class="knob" id="palBtn" title="Colours" aria-label="Choose colours"></button>Colour</div></div>
   <div class="lcd"><div class="scr">
     <div class="lcdTitle"><span class="dot" id="dot" title="MIDI clock running"></span>FM-1 Labs</div>
     <div id="dev"></div>
@@ -116,7 +116,6 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
   <div class="btns">
     <button id="go">Start clock</button>
     <button id="add">+ Slot</button>
-    <button id="palBtn">Colour</button>
   </div>
 </header>
 <div class="strip">
