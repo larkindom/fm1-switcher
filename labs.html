@@ -126,9 +126,11 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 <dialog id="palettes"><div class="emuBar"><b>Colours</b><button id="palClose">Close</button></div><div id="palGrid"><button class="sw" data-p="cream" aria-pressed="false" style="--b:#e7e0d4;--k:#3f4247"><span class="dev"></span>Cream</button><button class="sw" data-p="lilac" aria-pressed="false" style="--b:#d98fd0;--k:#9b5fcb"><span class="dev"></span>Lilac</button><button class="sw" data-p="graphite" aria-pressed="false" style="--b:#3b3b3d;--k:#161618"><span class="dev"></span>Graphite</button><button class="sw" data-p="orange" aria-pressed="false" style="--b:#e8501a;--k:#b8381f"><span class="dev"></span>Orange</button><button class="sw" data-p="blue" aria-pressed="false" style="--b:#ece9e1;--k:#3f6290"><span class="dev"></span>Blue</button><button class="sw" data-p="mint" aria-pressed="false" style="--b:#34363a;--k:#5ccfb4"><span class="dev"></span>Mint</button></div></dialog>
 <script>
 const $ = id => document.getElementById(id), PLAYER = 'https://remotefm1.com/', KEY = 'fm1-labs', MAX = 6;
-let fws = [], slots;
+// not in the Hub: runs in fm1-emu from the author's own package (the same link shrub.audio/play uses)
+const EXTRA = [{ id: 'shrub', name: 'SHRUB', kind: 'synth', editor: 'https://shrub.audio/editor/', url: 'https://joakimeriksson.github.io/fm1-emu/?package=' + encodeURIComponent('https://shrub.audio/editor/firmware/SHRUB.fwsc') + '&name=SHRUB&embed=1' }];
+let fws = EXTRA.slice(), slots;
 try { slots = JSON.parse(localStorage.getItem(KEY)); } catch {}
-if (!Array.isArray(slots) || !slots.length) slots = ['sloop', 'jiant', 'skiff', 'felucca'];
+if (!Array.isArray(slots) || !slots.length) slots = ['sloop', 'jiant', 'skiff', 'shrub'];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(slots)); } catch {} };
 
 document.querySelectorAll('[name=mode]').forEach(r => r.onchange = () => { location.href = r.value; });
@@ -149,7 +151,7 @@ function slotEl(i) {
   const pause = () => { if (frame) { frame.src = 'about:blank'; frame.replaceWith(body); frame = null; } play.textContent = '▶ Play'; };
   play.onclick = () => {
     if (frame) return pause();
-    frame = Object.assign(document.createElement('iframe'), { title: fw().name, src: PLAYER + '?fw=' + encodeURIComponent(sel.value) + '&embed=1' });
+    frame = Object.assign(document.createElement('iframe'), { title: fw().name, src: fw().url || PLAYER + '?fw=' + encodeURIComponent(sel.value) + '&embed=1' });
     frame.allow = 'midi; autoplay'; body.replaceWith(frame); play.textContent = '⏸ Pause';
   };
   sel.onchange = () => { pause(); slots[i] = sel.value; save(); play.disabled = !sel.value; const f = fw(); ed.hidden = !(f && /^https:\/\//.test(f.editor || '')); if (f) ed.href = f.editor; body.textContent = sel.value ? 'Press Play to load it.' : 'Pick a firmware, then press Play.'; };
@@ -163,7 +165,7 @@ function slotEl(i) {
 addEventListener('keydown', e => { if (e.key === 'Escape') { const b = document.querySelector('.slot.big .x'); if (b) b.click(); } });
 function draw() { $('slots').replaceChildren(...slots.map((_, i) => slotEl(i))); $('add').hidden = slots.length >= MAX; }
 $('add').onclick = () => { slots.push(''); save(); draw(); };
-fetch('https://thefirmwarehub.com/catalog.json').then(r => r.json()).then(c => { fws = c.firmwares.slice().sort((a, b) => a.name.localeCompare(b.name)); })
+fetch('https://thefirmwarehub.com/catalog.json').then(r => r.json()).then(c => { fws = [...c.firmwares, ...EXTRA].sort((a, b) => a.name.localeCompare(b.name)); })
   .catch(() => { $('msg').textContent = 'Could not load the firmware list from thefirmwarehub.com.'; }).finally(draw);
 
 // MIDI clock: 24 pulses per quarter note, scheduled a little ahead so the timing doesn't depend on the page's timers
