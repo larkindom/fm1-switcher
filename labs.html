@@ -116,12 +116,10 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
   <div class="btns">
     <button id="go">Start clock</button>
     <button id="add">+ Slot</button>
+    <button id="outBtn" title="MIDI clock out: click to cycle through your MIDI outputs">Clock out</button>
+    <input id="bpm" type="hidden" value="120">
   </div>
 </header>
-<div class="strip">
-  <label>BPM <input id="bpm" type="number" min="30" max="300" value="120"></label>
-  <label>MIDI clock out <select id="out"><option value="">none</option></select></label>
-</div>
 <div class="tray"><div class="grid" id="slots"></div></div>
 </div></div>
 </main>
@@ -176,10 +174,10 @@ async function getMidi() {
   try { midi = await navigator.requestMIDIAccess(); midi.onstatechange = fill; fill(); } catch { $('msg').textContent = 'MIDI access was refused: allow it in the address bar.'; }
   return midi;
 }
-function fill() { const v = $('out').value; $('out').replaceChildren(new Option('none', ''), ...outs().map(o => new Option(o.name, o.id))); $('out').value = outs().some(o => o.id === v) ? v : ''; out = outs().find(o => o.id === $('out').value) || null; }
-$('out').onfocus = getMidi; $('out').onchange = () => { out = outs().find(o => o.id === $('out').value) || null; status(); };
+let outId = '';
+function fill() { out = outs().find(o => o.id === outId) || null; if (!out) outId = ''; status(); }
+$('outBtn').onclick = async () => { await getMidi(); const ids = ['', ...outs().map(o => o.id)]; outId = ids[(ids.indexOf(outId) + 1) % ids.length]; fill(); };
 const setBpm = v => { v = Math.min(300, Math.max(30, Math.round(v) || 120)); $('bpm').value = v; const k = $('kBpm'); k.style.setProperty('--rot', ((v - 30) / 270 * 270 - 135) + 'deg'); k.setAttribute('aria-valuenow', v); status(); };
-$('bpm').oninput = () => setBpm($('bpm').value);
 { const k = $('kBpm'); let y = 0, v0 = 0;
   k.onpointerdown = e => { k.setPointerCapture(e.pointerId); y = e.clientY; v0 = +$('bpm').value; };
   k.onpointermove = e => { if (k.hasPointerCapture(e.pointerId)) setBpm(v0 + (y - e.clientY) * (e.shiftKey ? 0.25 : 1)); };
