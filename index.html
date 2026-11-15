@@ -14,7 +14,9 @@
 :root[data-palette=mint]{--bg:#34363a;--card:#45484d;--ink:#e9f6f1;--edge:#131415;--hi:#66696f;--shade:#26282b;--acc:#5ccfb4;--accink:#0d2b25;--line:#55595f}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;background-color:#8a5a2f;
- background-image:radial-gradient(ellipse 85% 50% at 50% -8%,rgba(255,238,205,.45),transparent 68%),radial-gradient(ellipse 130% 90% at 50% 125%,rgba(10,4,0,.6),transparent 62%),radial-gradient(ellipse 60% 100% at 0% 50%,rgba(10,4,0,.32),transparent 70%),radial-gradient(ellipse 60% 100% at 100% 50%,rgba(10,4,0,.32),transparent 70%),url(assets/desk.svg);background-size:auto,auto,auto,auto,1600px 1200px;background-position:0 0,0 0,0 0,0 0,center top;background-attachment:fixed,fixed,fixed,fixed,scroll}
+ background-image:url(assets/desk.svg);background-size:1600px 1200px;background-position:center top}
+/* shortcut: vignette lives on its own fixed layer, background-attachment:fixed repaints the whole page every scroll frame on weak GPUs */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 85% 50% at 50% -8%,rgba(255,238,205,.45),transparent 68%),radial-gradient(ellipse 130% 90% at 50% 125%,rgba(10,4,0,.6),transparent 62%),radial-gradient(ellipse 60% 100% at 0% 50%,rgba(10,4,0,.32),transparent 70%),radial-gradient(ellipse 60% 100% at 100% 50%,rgba(10,4,0,.32),transparent 70%)}
 .desk{padding:34px 18px 70px}
 /* the device */
 .rig{position:relative;z-index:1;max-width:1020px;margin:0 auto}
@@ -108,7 +110,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
     <button id="connect">Connect</button>
     <button id="backup" disabled title="Saves your project, samples and voice banks to a file on this computer (official FM1 Open firmware only)">Back up</button>
     <button id="bFav" title="Show favourites">Favs</button>
-    <button id="bOld" title="Hide firmware that only knows the older flash chip">Hide old chip</button>
+    <button id="bOld" title="Hide firmware that only knows the older flash chip">New chip only</button>
     <button id="bSaves" title="Open My saves">Saves</button>
     <button id="bRescue" title="Open the backup and rescue tools">Rescue</button>
   </div>
