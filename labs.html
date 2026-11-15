@@ -128,7 +128,7 @@ dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-s
 const $ = id => document.getElementById(id), PLAYER = 'https://remotefm1.com/', KEY = 'fm1-labs', MAX = 6;
 let fws = [], slots;
 try { slots = JSON.parse(localStorage.getItem(KEY)); } catch {}
-if (!Array.isArray(slots) || !slots.length) slots = ['sloop', 'jiant', 'skiff', ''];
+if (!Array.isArray(slots) || !slots.length) slots = ['sloop', 'jiant', 'skiff', 'felucca'];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(slots)); } catch {} };
 
 document.querySelectorAll('[name=mode]').forEach(r => r.onchange = () => { location.href = r.value; });
