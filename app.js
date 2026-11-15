@@ -230,7 +230,7 @@ async function render() {
   for (const m of items.filter(m => (!sel.value || (sel.value === '__fav' ? favs.has(favKey(m)) : m.kind === sel.value)) && (!q || hay(m).includes(q)) && !(hideOld && (m.chip === 'old' || m.chip === 'unknown'))).sort(by)) {
     const el = document.createElement('div'); el.className = 'card' + (identity === m.product ? ' cur' : '');
     const src = m.hubId ? HUB + (m.card ? m.card.replace(/^\//, '') : `img/w0/${m.hubId}.webp`) : 'assets/fm1.svg';
-    const pic = src ? `<img alt="" src="${esc(src)}">` : esc(m.label.slice(0, 2));
+    const pic = src ? `<img alt="" loading="lazy" decoding="async" src="${esc(src)}">` : esc(m.label.slice(0, 2));
     el.innerHTML = `<div class="pic">${pic}</div><div class="t"><b></b><small></small></div><div class="row"></div>`;
     el.querySelector('b').textContent = m.label;
     const img = el.querySelector('.pic img'); if (img) img.onerror = () => { img.onerror = null; img.src = 'assets/fm1.svg'; };
