@@ -11,39 +11,118 @@
 :root[data-palette=graphite]{--bg:#3b3b3d;--card:#4a4a4d;--ink:#ececec;--edge:#151516;--hi:#6a6a6e;--shade:#2a2a2c;--acc:#161618;--accink:#ffffff;--line:#5a5a5e}
 :root[data-palette=orange]{--bg:#e8501a;--card:#ffd9c4;--ink:#3b150a;--edge:#6a1f0a;--hi:#fff0e8;--shade:#d4906f;--acc:#b8381f;--accink:#ffffff;--line:#e07a52}
 :root[data-palette=blue]{--bg:#ece9e1;--card:#fbfaf6;--ink:#1f2b3d;--edge:#2a3f5c;--hi:#ffffff;--shade:#d3cfc4;--acc:#3f6290;--accink:#ffffff;--line:#c9c6bc}
+:root[data-palette=mint]{--bg:#34363a;--card:#45484d;--ink:#e9f6f1;--edge:#131415;--hi:#66696f;--shade:#26282b;--acc:#5ccfb4;--accink:#0d2b25;--line:#55595f}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace}
-main{max-width:1200px;margin:0 auto;padding:18px}
-.mode{display:flex;gap:6px;margin:0 0 16px;padding:4px;width:max-content;border-radius:999px;background:var(--shade)}
+body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.5 'Space Mono',ui-monospace,Menlo,monospace;font-variant-ligatures:none;background-color:#8a5a2f;
+ background-image:url(assets/desk.svg);background-size:1600px 1200px;background-position:center top}
+/* shortcut: vignette lives on its own fixed layer, background-attachment:fixed repaints the whole page every scroll frame on weak GPUs */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 85% 50% at 50% -8%,rgba(255,238,205,.45),transparent 68%),radial-gradient(ellipse 130% 90% at 50% 125%,rgba(10,4,0,.6),transparent 62%),radial-gradient(ellipse 60% 100% at 0% 50%,rgba(10,4,0,.32),transparent 70%),radial-gradient(ellipse 60% 100% at 100% 50%,rgba(10,4,0,.32),transparent 70%)}
+.mode{position:relative;z-index:2;display:flex;gap:6px;margin:0 auto 14px;padding:4px;width:max-content;border-radius:999px;background:rgba(0,0,0,.35);color:#f4efe6}
 .mode label{cursor:pointer;padding:5px 16px;border-radius:999px;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
-.mode input{position:absolute;opacity:0;pointer-events:none}.mode label:has(:checked){background:var(--acc);color:var(--accink)}.mode label:has(:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
-h1{font-size:16px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4px}.sub{font-size:12px;opacity:.75;margin:0 0 14px}
-button,select,input[type=number]{font:inherit;font-size:12px;color:var(--ink);background:var(--card);border:0;border-radius:9px;padding:7px 12px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35)}
-button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}input[type=number]{width:80px;cursor:text}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;margin-bottom:16px;border-radius:16px;background:var(--shade)}
-.bar label{display:flex;gap:6px;align-items:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-#go.on{background:#38d27a;color:#06240f}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px}
-.slot{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:20px;background:var(--card);box-shadow:0 5px 0 rgba(0,0,0,.4),inset 0 2px 0 var(--hi)}
-.slot.big{position:fixed;inset:3vh 3vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.65)}
-.slot header{display:flex;gap:6px;flex-wrap:wrap}.slot header select{flex:1 1 100%;min-width:0}
-.slot iframe{width:100%;height:320px;border:0;border-radius:13px;background:#000}.slot.big iframe,.slot.big .empty{flex:1;height:auto}
+.mode input{position:absolute;opacity:0;pointer-events:none}.mode label:has(:checked){background:#f4efe6;color:#2b2b2e}.mode label:has(:focus-visible){outline:2px solid #f4efe6;outline-offset:2px}
+.desk{padding:34px 18px 70px}
+/* the device */
+.rig{position:relative;z-index:1;max-width:1020px;margin:0 auto}
+.device{position:relative;z-index:1;padding:26px 28px 32px;border-radius:38px;
+ background:linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,0) 40%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(180deg,color-mix(in srgb,var(--bg),white 14%),var(--bg) 14%,color-mix(in srgb,var(--bg),black 6%));
+ box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(0,0,0,.16),inset 2px 0 0 rgba(255,255,255,.14),inset -2px 0 0 rgba(0,0,0,.14)}
+/* thickness and weight: a darker slab under the body, contact shadow, then soft ambient shadow falling away from the window light */
+.rig::before{content:'';position:absolute;z-index:0;left:0;right:0;top:14px;bottom:-14px;border-radius:38px;background:color-mix(in srgb,var(--bg),black 46%);
+ box-shadow:0 5px 3px rgba(0,0,0,.7),0 16px 14px -2px rgba(0,0,0,.55),0 34px 40px -6px rgba(0,0,0,.5),0 70px 90px -24px rgba(0,0,0,.55),8px 24px 34px -10px rgba(0,0,0,.35)}
+.cable{position:absolute;z-index:0;top:-4px;left:calc(50% + 230px);width:300px;height:140px;overflow:visible;pointer-events:none;filter:drop-shadow(6px 10px 5px rgba(0,0,0,.55))}
+.desk{position:relative}
+.top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:22px;align-items:center}
+.knobs{display:grid;grid-template-columns:repeat(2,66px);gap:12px 14px}
+.kw{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+button.knob{width:46px;height:46px;border-radius:50%;padding:0;position:relative;background:radial-gradient(circle at 35% 28%,#5c5c61,#1b1b1d 68%);box-shadow:0 3px 0 #000,0 0 0 4px rgba(0,0,0,.22),inset 0 2px 2px rgba(255,255,255,.28);transform:rotate(var(--rot,0deg));transition:transform .25s}
+button.knob::after{content:'';position:absolute;left:50%;top:5px;width:3px;height:13px;margin-left:-1.5px;border-radius:2px;background:#f4f1ea}
+.lcd{background:#0c0e0d;border-radius:20px;padding:10px;box-shadow:inset 0 0 0 3px #202422,0 2px 0 rgba(255,255,255,.3),0 10px 18px rgba(0,0,0,.3)}
+.scr{position:relative;overflow:hidden;background:#aebfa0;color:#1c2a1b;border-radius:8px;padding:10px 14px 12px;min-height:128px;box-shadow:inset 0 0 18px rgba(0,0,0,.3)}
+.scr::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.04) 0 1px,transparent 1px 3px)}
+.lcdTitle{font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:15px;display:flex;align-items:center;gap:8px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#5d6b57}.dot.on{background:#1d7a38;box-shadow:0 0 6px #2bd35f}
+#dev{margin-top:4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;min-height:1.4em}#dev:empty::before{content:'not connected';opacity:.65}
+#msg{margin-top:6px;font-size:12px;min-height:3em}#msg:empty::before{content:'Plug in your FM-1 over USB-C, press CONNECT, pick a firmware, switch.';opacity:.7}
+#msg.err{background:#1c2a1b;color:#aebfa0;padding:3px 6px;border-radius:3px}
+.prog{height:9px;margin-top:8px;border-radius:2px;background:rgba(0,0,0,.15);overflow:hidden}.prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,#1c2a1b 0 7px,transparent 7px 9px);transition:width .2s}
+#hint{position:absolute;right:12px;top:10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:0;transition:opacity .2s}#hint.on{opacity:.85}
+.btns{display:grid;grid-template-columns:repeat(3,76px);gap:9px;padding:11px;border-radius:16px;background:color-mix(in srgb,var(--bg),black 15%);box-shadow:inset 0 3px 7px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.3)}
+button{font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--card);border:0;border-radius:9px;padding:8px 12px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35)}
+button:hover:not(:disabled){filter:brightness(1.06)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}button:disabled{opacity:.45;cursor:default}
+.btns button{background:var(--acc);color:var(--accink);padding:11px 4px;font-size:10px;line-height:1.2}.btns button.on{outline:2px solid #fff;outline-offset:-4px}
+button.p{background:var(--acc);color:var(--accink)}
+select,#q{font:inherit;font-size:12px;color:var(--ink);background:var(--card);border:0;border-radius:8px;padding:7px 10px;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.strip{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:22px 0 0}.strip #q{flex:1;min-width:180px}.strip label{display:flex;gap:6px;align-items:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+/* the key tray holds the firmware cards */
+.tray{margin-top:16px;padding:20px;border-radius:28px;background:var(--acc);box-shadow:inset 0 7px 16px rgba(0,0,0,.45),0 2px 0 rgba(255,255,255,.35)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
+.card{display:flex;flex-direction:column;overflow:hidden;padding:8px;border-radius:20px;background:var(--card);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.4),0 12px 16px rgba(0,0,0,.3),inset 0 2px 0 var(--hi)}
+.card.cur{outline:3px solid #38d27a;outline-offset:2px}
+.card b{display:block;font-weight:700;letter-spacing:.02em}.card small{opacity:.75;font-size:11.5px}
+.card .pic{position:relative;aspect-ratio:4/3;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;border-radius:13px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)}
+.card .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.card .t{padding:10px 6px 4px;flex:1}.card .row{display:flex;gap:7px;padding:8px 2px 2px;flex-wrap:wrap}.card .row .p{flex:1 1 100%;order:-1}.card .row>*:not(.p){flex:1}.ic{padding:7px 10px}
+.try{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:9px;text-decoration:none;color:var(--ink);background:var(--card);box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.35)}
+.star{position:absolute;top:6px;right:6px;font-size:16px;line-height:1;padding:3px 8px}
+.badge{display:inline-block;font-size:10.5px;border-radius:5px;padding:1px 7px;margin-top:4px;background:color-mix(in srgb,var(--card),black 10%);letter-spacing:.04em}.badge.w{background:var(--warn);color:#fff}
+h2{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:26px 0 8px;padding:5px 12px;border-radius:9px;background:var(--card);color:var(--ink)}
+p.sub{margin:0 0 12px;opacity:.85;line-height:1.5}#old p.sub,#old h2{background:var(--card);padding:8px 12px;border-radius:9px;color:var(--ink);opacity:1;display:block}
+#old h2{display:inline-block}
+.plate,#hist:not(:empty){background:var(--card);border-radius:10px;padding:8px 12px;color:var(--ink);margin:0 0 14px}
+#notice{margin:0 0 16px}
+/* rear panel: docs and extras */
+.rear{margin-top:24px;display:grid;gap:12px}
+details{background:color-mix(in srgb,var(--bg),black 12%);border-radius:14px;padding:12px 16px;box-shadow:inset 0 2px 5px rgba(0,0,0,.25)}summary{cursor:pointer;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+details .sub{background:none;padding:0}.tools{margin:8px 0 0;padding-left:18px}.tools li{margin:6px 0}
+.drop{border:2px dashed color-mix(in srgb,var(--ink),transparent 60%);border-radius:12px;padding:14px;text-align:center;margin-top:10px}.drop.over{border-color:var(--acc)}.drop button{margin:3px}
+label.adv{display:block;font-size:12px;opacity:.9}
+a{color:inherit}
+/* dialogs and emulator */
+dialog{background:var(--card);color:var(--ink);border:0;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.5);padding:8px;width:min(520px,92vw);max-height:80vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.55)}
+.setRow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0}.emuBar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}
+#emu{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;z-index:10}#emu[hidden]{display:none}
+.emuBox{background:var(--card);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.5);width:min(1000px,100%);height:min(780px,100%);display:flex;flex-direction:column;overflow:hidden}#emuFrame{flex:1;border:0;background:#000}
+.sw{width:104px;padding:0;background:none;box-shadow:none;border:0;text-align:center;color:var(--ink)}
+.sw .dev{display:block;height:58px;border-radius:12px;background:var(--b);position:relative;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
+.sw .dev::before{content:'';position:absolute;left:34px;top:8px;width:20px;height:16px;border-radius:3px;background:#1d1d1f}
+.sw .dev::after{content:'';position:absolute;left:8px;right:8px;bottom:7px;height:18px;border-radius:6px;background:var(--k)}
+.sw[aria-pressed=true] .dev{box-shadow:0 0 0 3px var(--acc),0 0 0 6px rgba(0,0,0,.5)}
+#palGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:12px}
+@media (max-width:860px){.cable{display:none}.rig::before{top:8px;bottom:-8px;border-radius:28px}.top{grid-template-columns:1fr}.knobs{grid-template-columns:repeat(4,1fr)}.btns{grid-template-columns:repeat(3,1fr)}.device{padding:18px 16px 22px;border-radius:28px}.desk{padding:14px 8px 40px}.tray{padding:12px;border-radius:20px}}
+
+.mode{z-index:0}.top{grid-template-columns:minmax(0,1fr) auto}.strip{margin-top:18px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+#go.on{background:#38d27a;color:#06240f}.strip input[type=number]{width:80px}
+.slot header{display:flex;gap:6px;flex-wrap:wrap}.slot header select{flex:1 1 100%;min-width:0}.slot header>*{flex:0 0 auto}.slot header select{flex:1 1 100%}
+.slot{gap:8px}.slot iframe{width:100%;height:320px;border:0;border-radius:13px;background:#000}
 .empty{height:320px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;border-radius:13px;background:var(--line);font-size:12px;opacity:.8}
+.slot.big{position:fixed;inset:3vh 3vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.65)}
+.slot.big iframe,.slot.big .empty{flex:1;height:auto}
+@media (max-width:860px){.top{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<main>
+<main class="desk">
 <nav class="mode" aria-label="Mode"><label><input type="radio" name="mode" value="index.html">Switcher</label><label><input type="radio" name="mode" value="labs.html" checked>Labs</label></nav>
-<h1>FM-1 Labs</h1>
-<p class="sub">Run several firmwares at once, each in its own player. Slots start paused: press Play on the ones you want, so a slow computer isn't asked to run six at once.</p>
-<div class="bar">
-  <button id="go">Start clock</button>
+<svg class="cable" viewBox="0 0 300 140" aria-hidden="true"><path d="M30 140 L30 84 C30 46 70 36 112 32 S196 22 238 -6 S300 -50 330 -90" fill="none" stroke="#0e0e0f" stroke-width="9" stroke-linecap="round"/><path d="M28 140 L28 84 C28 44 68 34 110 30 S194 20 236 -8 S298 -52 328 -92" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2" stroke-linecap="round"/></svg>
+<div class="rig"><div class="device">
+<header class="top">
+  <div class="lcd"><div class="scr">
+    <div class="lcdTitle"><span class="dot" id="dot" title="MIDI clock running"></span>FM-1 Labs</div>
+    <div id="dev"></div>
+    <div id="msg" style="min-height:3em">Slots start paused: press Play on the ones you want. For clock, send it to a loopback port (macOS IAC Driver, Windows loopMIDI) and pick that port as the MIDI input inside each player.</div>
+  </div></div>
+  <div class="btns">
+    <button id="go">Start clock</button>
+    <button id="add">+ Slot</button>
+  </div>
+</header>
+<div class="strip">
   <label>BPM <input id="bpm" type="number" min="30" max="300" value="120"></label>
   <label>MIDI clock out <select id="out"><option value="">none</option></select></label>
-  <span class="sub" id="note" style="margin:0">Send the clock to a loopback port (macOS: IAC Driver, Windows: loopMIDI) and choose that port as the MIDI input inside each player.</span>
 </div>
-<div class="grid" id="slots"></div>
-<p><button id="add">+ Add slot</button></p>
+<div class="tray"><div class="grid" id="slots"></div></div>
+</div></div>
 </main>
 <script>
 const $ = id => document.getElementById(id), PLAYER = 'https://remotefm1.com/', KEY = 'fm1-labs', MAX = 6;
@@ -55,7 +134,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(slots)); } c
 document.querySelectorAll('[name=mode]').forEach(r => r.onchange = () => { location.href = r.value; });
 
 function slotEl(i) {
-  const el = document.createElement('div'); el.className = 'slot';
+  const el = document.createElement('div'); el.className = 'slot card';
   const head = document.createElement('header'), sel = document.createElement('select');
   sel.append(new Option('Choose firmware…', ''));
   for (const f of fws) sel.append(new Option(f.name + ' · ' + f.kind, f.id));
@@ -85,25 +164,28 @@ addEventListener('keydown', e => { if (e.key === 'Escape') { const b = document.
 function draw() { $('slots').replaceChildren(...slots.map((_, i) => slotEl(i))); $('add').hidden = slots.length >= MAX; }
 $('add').onclick = () => { slots.push(''); save(); draw(); };
 fetch('https://thefirmwarehub.com/catalog.json').then(r => r.json()).then(c => { fws = c.firmwares.slice().sort((a, b) => a.name.localeCompare(b.name)); })
-  .catch(() => { $('note').textContent = 'Could not load the firmware list from thefirmwarehub.com.'; }).finally(draw);
+  .catch(() => { $('msg').textContent = 'Could not load the firmware list from thefirmwarehub.com.'; }).finally(draw);
 
 // MIDI clock: 24 pulses per quarter note, scheduled a little ahead so the timing doesn't depend on the page's timers
 let midi = null, out = null, running = false, next = 0, timer = 0;
 const outs = () => midi ? [...midi.outputs.values()] : [];
 async function getMidi() {
   if (midi || !navigator.requestMIDIAccess) return midi;
-  try { midi = await navigator.requestMIDIAccess(); midi.onstatechange = fill; fill(); } catch { $('note').textContent = 'MIDI access was refused: allow it in the address bar.'; }
+  try { midi = await navigator.requestMIDIAccess(); midi.onstatechange = fill; fill(); } catch { $('msg').textContent = 'MIDI access was refused: allow it in the address bar.'; }
   return midi;
 }
 function fill() { const v = $('out').value; $('out').replaceChildren(new Option('none', ''), ...outs().map(o => new Option(o.name, o.id))); $('out').value = outs().some(o => o.id === v) ? v : ''; out = outs().find(o => o.id === $('out').value) || null; }
-$('out').onfocus = getMidi; $('out').onchange = () => { out = outs().find(o => o.id === $('out').value) || null; };
+$('out').onfocus = getMidi; $('out').onchange = () => { out = outs().find(o => o.id === $('out').value) || null; status(); };
+$('bpm').oninput = () => status();
+const status = () => { $('dot').classList.toggle('on', running); $('dev').textContent = (+$('bpm').value || 120) + ' BPM · clock ' + (running ? 'running' : 'stopped') + ' · out: ' + (out ? out.name : 'none'); };
 const tick = () => { const now = performance.now(), ms = 2500 / Math.min(300, Math.max(30, +$('bpm').value || 120)); while (next < now + 120) { out && out.send([0xF8], next); next += ms; } };
 $('go').onclick = async () => {
   await getMidi(); running = !running;
   if (running) { next = performance.now() + 50; out && out.send([0xFA], next); timer = setInterval(tick, 25); }
   else { clearInterval(timer); out && out.send([0xFC]); }
-  $('go').textContent = running ? 'Stop clock' : 'Start clock'; $('go').classList.toggle('on', running);
+  status(); $('go').textContent = running ? 'Stop clock' : 'Start clock'; $('go').classList.toggle('on', running);
 };
+status();
 </script>
 </body>
 </html>
