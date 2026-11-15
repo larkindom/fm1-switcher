@@ -50,7 +50,7 @@ button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}input[
 const $ = id => document.getElementById(id), PLAYER = 'https://remotefm1.com/', KEY = 'fm1-labs', MAX = 6;
 let fws = [], slots;
 try { slots = JSON.parse(localStorage.getItem(KEY)); } catch {}
-if (!Array.isArray(slots) || !slots.length) slots = ['', '', '', ''];
+if (!Array.isArray(slots) || !slots.length) slots = ['sloop', 'jiant', 'skiff', ''];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(slots)); } catch {} };
 
 document.querySelectorAll('[name=mode]').forEach(r => r.onchange = () => { location.href = r.value; });
