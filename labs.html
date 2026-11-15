@@ -194,11 +194,12 @@ let midi = null, out = null, running = false, next = 0, timer = 0;
 const outs = () => midi ? [...midi.outputs.values()] : [];
 async function getMidi() {
   if (midi || !navigator.requestMIDIAccess) return midi;
-  try { midi = await navigator.requestMIDIAccess(); midi.onstatechange = fill; fill(); } catch { $('msg').textContent = 'MIDI access was refused: allow it in the address bar.'; }
+  try { midi = await navigator.requestMIDIAccess(); midi.onstatechange = fill; fill(); } catch { err = 'MIDI access was refused: allow it in the address bar, then press Start clock again.'; status(); }
   return midi;
 }
-let outId = '';
-function fill() { out = outs().find(o => o.id === outId) || null; if (!out) outId = ''; status(); }
+let outId = '', picked = false, err = '';
+// the first time ports show up, take a loopback-looking one (IAC Driver, loopMIDI) so the clock has somewhere to go
+function fill() { if (!picked && outs().length) { picked = true; const p = outs().find(o => /iac|loop|bus|virtual/i.test(o.name)); if (p) outId = p.id; } out = outs().find(o => o.id === outId) || null; if (!out) outId = ''; err = ''; status(); }
 $('outBtn').onclick = async () => { await getMidi(); const ids = ['', ...outs().map(o => o.id)]; outId = ids[(ids.indexOf(outId) + 1) % ids.length]; fill(); };
 const setBpm = v => { v = Math.min(300, Math.max(30, Math.round(v) || 120)); $('bpm').value = v; const k = $('kBpm'); k.style.setProperty('--rot', ((v - 30) / 270 * 270 - 135) + 'deg'); k.setAttribute('aria-valuenow', v); status(); };
 { const k = $('kBpm'); let y = 0, v0 = 0;
@@ -206,7 +207,12 @@ const setBpm = v => { v = Math.min(300, Math.max(30, Math.round(v) || 120)); $('
   k.onpointermove = e => { if (k.hasPointerCapture(e.pointerId)) setBpm(v0 + (y - e.clientY) * (e.shiftKey ? 0.25 : 1)); };
   k.onwheel = e => { e.preventDefault(); setBpm(+$('bpm').value + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1)); };
   k.onkeydown = e => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); setBpm(+$('bpm').value + d * (e.shiftKey ? 10 : 1)); } }; }
-const status = () => { $('dot').classList.toggle('on', running); $('dev').textContent = (+$('bpm').value || 120) + ' BPM · clock ' + (running ? 'running' : 'stopped') + ' · out: ' + (out ? out.name : 'none'); };
+const status = () => {
+  $('dot').classList.toggle('on', running); $('dev').textContent = (+$('bpm').value || 120) + ' BPM · clock ' + (running ? 'running' : 'stopped') + ' · out: ' + (out ? out.name : 'none');
+  $('msg').textContent = err || (out
+    ? 'The BPM knob sets the tempo sent to ' + out.name + '. In a player: Settings > MIDI input = ' + out.name + ', and turn on "and reach the firmware\'s MIDI in". The players share that setting, so once is enough.'
+    : 'No clock is reaching the players yet: press CLOCK OUT to pick a loopback MIDI port (macOS: IAC Driver, Windows: loopMIDI).');
+};
 const tick = () => { const now = performance.now(), ms = 2500 / Math.min(300, Math.max(30, +$('bpm').value || 120)); while (next < now + 120) { out && out.send([0xF8], next); next += ms; } };
 $('go').onclick = async () => {
   await getMidi(); running = !running;
