@@ -24,6 +24,12 @@ Cards from the hub have a ▶ that opens that firmware in an embedded panel (or 
 - A banner explains update mode and the hold-OCT- rescue start when no FM-1 is found or it is stuck in its update loader.
 - **Back to official V15** from a community firmware goes through the community updater, as the hub does. Not tested on hardware.
 
+## Shrub
+Shrub (Steve Duda / Xfer Records, a stripped-down Serum) has a card in the tray, but its file is not stored here: it is free with all rights reserved by Xfer. The card's **Install ↗** opens Shrub's own installer (https://shrub.audio/editor/install, Chrome or Edge over USB) in a new tab; ⓘ has the details. It sits with the unchecked firmwares because its newer-chip support is unconfirmed. `LINKS` in `app.js` holds such link-only cards.
+
+## M-Bootloader
+[m-bootloader](https://github.com/jvitkauskas/m-bootloader) (MIT, by jvitkauskas) replaces the FM-1's bootloader with one that checks the firmware before starting it and adds a recovery menu (PLAY at power-on) and download mode (REC at power-on). This switcher does not install it; the rescue panel says how (M-Flasher or M-VAVE's M-UPGRADE, after a full backup). Its **MIDI mode** shows up as a USB-MIDI device named `FM-1 Update` answering `ota-FM-1_900`. The switcher recognises that by port name alone (it sends nothing extra), says so on the LCD notice, and lets **Switch** install a community firmware or stock V15 through the community updater, which is the path its author tested with SLOOP's, Felucca's, Melodee's and ChoralRoot's installers. FM1 Open (.json) packages are refused up front, since MIDI mode never answers as M-VAVE's updater. Official M-VAVE updates and Baud Girl's installer put the stock bootloader back. Installing from MIDI mode through this switcher is untested on hardware.
+
 ## Firmware not on the hub
 `EXTRAS` in `app.js` lists firmwares kept in this repo and pinned by SHA-256 (currently Garden FM, ReVo, AURORA and Mutable Dreams, JAZZY, Rhythmer and JamesOS, all GPL-3.0; see the `.md` files in `firmware/`). They are marked "chip support unknown" because nobody has checked them.
 
