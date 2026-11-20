@@ -98,6 +98,10 @@ const EXTRAS = [{ file: 'firmware/garden-main-5e185e6.fwsc', sha256: '2e8e1cb2f9
   { file: 'firmware/jamesos-1.0a-build2105.fwsc', sha256: 'fa6fb07ecfa0ae92a34ddd3c09b09b37308cf5f41384f4c14dd6535941a334e1', name: 'JamesOS', version: '1.0a-build2105', product: 'FM-1_9262105',
   lic: 'GPL-3.0', chip: 'unknown', kind: 'groove', info: { what: 'JamesOS: 7-track groovebox (three instrument tracks, four drum lanes) with 24 Plaits engines, 64 presets, 64-step conditional sequencer. Alpha. "From V15" package: install from official V15; other firmwares may reject it. Not on The Firmware Hub, so not vetted; flash-chip support unknown.', author: 'Gjelly', editor: 'https://gjelly.com/JamesOS/install',
   source: 'https://gjelly.com/JamesOS/licenses', release: 'https://gjelly.com/JamesOS', site: 'https://gjelly.com/JamesOS' } }];
+// Firmwares that only install from their own site (licence or format keeps them out of the library): shown as cards that link out.
+const LINKS = [{ link: 'https://shrub.audio/editor/install', sha256: 'link:shrub', label: 'Shrub 1.06 beta', name: 'Shrub', lic: 'Proprietary (free)', chip: 'unknown', kind: 'synth',
+  info: { what: 'Shrub: a stripped-down Serum for the FM-1 by Steve Duda (Xfer Records). Two wavetable oscillators, sub and noise, Serum filters, 100 factory presets, loads Serum 1 patches and custom wavetables; browser editor and VST3. Free, but all rights reserved by Xfer, so it is not stored here: install it from its own page (Chrome or Edge, over USB). Unconfirmed on the newer flash chip.',
+    author: 'Steve Duda (Xfer Records)', site: 'https://shrub.audio/', release: 'https://shrub.audio/editor/install' } }];
 async function addExtra(x) {
   const r = await fetch(x.file); if (!r.ok) throw new Error('download failed: HTTP ' + r.status);
   const pkg = new Uint8Array(await r.arrayBuffer());
@@ -210,16 +214,21 @@ async function probe() {
   $('backup').disabled = !identity; $('dot').className = 'dot' + (identity ? ' on' : ''); $('dot').title = identity ? 'Connected' : 'Not connected'; $('dev').textContent = identity || '';
   updateNotice(); render();
 }
+// M-Bootloader's MIDI mode (github.com/jvitkauskas/m-bootloader, SPEC 11.6): a USB-MIDI device named "FM-1 Update" that answers as
+// ota-FM-1_900, the identity community installers look for. Told apart by its port name only: nothing extra is sent to it.
+// It installs a package's flash.bin (community firmware, stock V15) but never answers as M-VAVE's updater, so FM1 Open .json packages fail.
+const mbootMidi = () => identity === 'ota-FM-1_900' && !!access && [...access.inputs.values()].some(p => p.state === 'connected' && /^FM-1 Update$/i.test((p.name || '').trim()));
 function updateNotice() {
   const n = $('notice'); n.hidden = true; if (!access) return;
-  if (!identity) n.textContent = 'No FM-1 found. Plug it in over USB, switch it on, and close other MIDI apps and tabs. If it still does not appear, hold OCT\u2212 while switching it on to start it in update mode.';
+  if (!identity) n.textContent = 'No FM-1 found. Plug it in over USB, switch it on, and close other MIDI apps and tabs. If it still does not appear, hold OCT\u2212 while switching it on to start it in update mode, or, with M-Bootloader installed, hold PLAY while switching it on and choose MIDI mode.';
+  else if (mbootMidi()) n.textContent = 'The FM-1 is in M-Bootloader\'s MIDI mode (' + identity + '), waiting for a firmware. Switch to a community firmware or stock V15 to install it; FM1 Open (.json) packages can\'t install from here. Keep this tab in front: the FM-1 reads the package twice, so wait for its own screen to finish. To leave without installing, press OCT\u2212, OCT+, PLAY or REC on the FM-1.';
   else if (/^ota-/i.test(identity)) n.textContent = 'The FM-1 is in update mode (' + identity + '). Pick the firmware you were installing to finish the update.';
   else return;
   n.hidden = false;
 }
 
 async function render() {
-  const items = await all(); $('list').replaceChildren(); $('listOld').replaceChildren();
+  const items = [...await all(), ...LINKS]; $('list').replaceChildren(); $('listOld').replaceChildren();
   const kinds = [...new Set(items.map(m => m.kind).filter(Boolean))].sort(), sel = $('kind');
   if (sel.options.length - 2 !== kinds.length) sel.replaceChildren(new Option('All', ''), new Option('★ Favourites', '__fav'), ...kinds.map(k => new Option(k, k)));
   sel.value = pref('kind'); $('sort').value = pref('sort') || 'name';
@@ -234,11 +243,12 @@ async function render() {
     el.innerHTML = `<div class="pic">${pic}</div><div class="t"><b></b><small></small></div><div class="row"></div>`;
     el.querySelector('b').textContent = m.label;
     const img = el.querySelector('.pic img'); if (img) img.onerror = () => { img.onerror = null; img.src = 'assets/fm1.svg'; };
-    el.querySelector('small').textContent = `${m.product} · ${(m.bytes / 1024) | 0} KB` + (m.lic ? ' · ' + m.lic : '') + (identity === m.product ? ' · installed' : '');
+    el.querySelector('small').textContent = m.link ? 'Installs from its own site' + (m.lic ? ' · ' + m.lic : '') : `${m.product} · ${(m.bytes / 1024) | 0} KB` + (m.lic ? ' · ' + m.lic : '') + (identity === m.product ? ' · installed' : '');
     if (m.chip === 'old') el.querySelector('.t').insertAdjacentHTML('beforeend', '<br><span class="badge w" title="Only knows the first FM-1s\' Puya flash chip">old flash chip only</span>');
     else if (m.chip === 'unknown') el.querySelector('.t').insertAdjacentHTML('beforeend', '<br><span class="badge w" title="Not on the Firmware Hub: flash-chip support has not been checked">chip support unknown</span>');
-    const sw = Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
-    sw.onclick = () => run(m);
+    const sw = m.link ? Object.assign(document.createElement('a'), { textContent: 'Install ↗', className: 'p btn', title: 'Opens its own installer in a new tab (Chrome or Edge, FM-1 on USB)', href: m.link, target: '_blank', rel: 'noopener' })
+      : Object.assign(document.createElement('button'), { textContent: 'Switch', className: 'p', disabled: !identity || busy });
+    if (!m.link) sw.onclick = () => run(m);
     const row = el.querySelector('.row');
     const star = Object.assign(document.createElement('button'), { textContent: getFavs().has(favKey(m)) ? '★' : '☆', className: 'star', title: 'Favourite', onclick: () => { toggleFav(m); render(); } });
     el.querySelector('.pic').append(star);
@@ -251,7 +261,7 @@ async function render() {
   }
   $('bFav').classList.toggle('on', sel.value === '__fav'); $('bOld').classList.toggle('on', hideOld);
   $('old').hidden = !items.some(m => m.chip === 'old' || m.chip === 'unknown');
-  if (!items.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
+  if (items.length === LINKS.length) $('list').innerHTML = '<p class="sub">Loading firmwares…</p>';
 }
 const favKey = m => m.hubId || m.sha256;
 const getFavs = () => { try { return new Set(JSON.parse(localStorage.getItem('fm1-favs') || '[]')); } catch { return new Set(); } };
@@ -264,6 +274,7 @@ function showInfo(m) {
   row('Author', i.author); row('Licence', m.lic); row('Released', i.date); row('Identity', m.product); row('Hub installs', m.installs ? String(m.installs) : ''); row('GitHub stars', i.stars ? String(i.stars) : '');
   row('Flash chip', { old: 'Older chip only: saving may fail on newer FM-1s', new: 'Listed by the hub as saving on newer FM-1s (a screening filter, not a certification)', any: 'Listed by the hub as working on either chip (a screening filter, not a certification)', unknown: 'Unknown: not checked by the hub' }[m.chip]);
   row('Built from source', i.built ? 'Yes, GitHub signed this exact file' + (i.commit ? ` (commit ${i.commit.slice(0, 7)})` : '') : m.pkg ? 'Not verified by the hub' : '');
+  row('Install', m.link ? 'From its own page, not through this switcher' : '');
   const links = document.createElement('div'); links.className = 'setRow';
   for (const [t, u] of [['Release notes', i.release], ['Source', i.source], ['Project site', i.site], ['Editor', i.editor]]) if (/^https:\/\//.test(u || '')) links.append(Object.assign(document.createElement('a'), { textContent: t, href: u, target: '_blank', rel: 'noopener' }));
   if (links.children.length) box.append(links);
@@ -305,6 +316,7 @@ $('emuClose').onclick = () => { $('emu').hidden = true; $('emuFrame').src = 'abo
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 async function run(meta) {
+  if (mbootMidi() && !meta.pkg && meta.kind !== 'stock') return msg('M-Bootloader\'s MIDI mode installs community firmware and stock V15 only. To get to FM1 Open, install stock V15 first, then switch from there.', true);
   const force = $('force').checked;
   const oldChip = meta.chip === 'unknown' ? '\n\nWARNING: this firmware is not listed on The Firmware Hub, so nobody has vetted it, and its flash-chip support is unknown. On a newer FM-1 saving may fail.' : meta.chip === 'old' ? '\n\nWARNING: this version only knows the first FM-1s\' flash chip (Puya). On a newer FM-1 (UC25HQ80, common on AliExpress units) saving may fail and later updates from it may not work. Only continue if you know your unit has the older chip.' : '';
   const chipNote = meta.kind === 'stock' ? '' : '\n\nFlash chip: check yours in M-Flasher (Device Info → Flash Chip): 0x856014 is the older chip, 0xB36014 the newer. Choose firmware whose author says it supports your chip; flashing official V15 or V16 first will not fix an incompatible one. A successful flash, a normal boot or a "SAVED" message does not prove compatibility, so after switching check that a save survives a full power cycle.';
